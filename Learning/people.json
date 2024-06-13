@@ -1,22 +1,14 @@
-{
-  "people": [
+[
     {
-      "id": 1,
-      "name": "Mike",
-      "age": 25,
-      "gender": "M"
+        "id": 1,
+        "name": "John",
+        "age": 45,
+        "gender": "M"
     },
     {
-      "id": 2,
-      "name": "John",
-      "age": 45,
-      "gender": "M"
-    },
-    {
-      "id": 3,
-      "name": "Emma",
-      "age": 13,
-      "gender": "F"
+        "id": 2,
+        "name": "NUHAI",
+        "age": 0,
+        "gender": "F"
     }
-  ]
-}
+]
