@@ -120,3 +120,60 @@ function updateButtonState() {
 
 // Initial call to set the correct state of the button
 updateButtonState();
+
+
+function saveRisk() {
+    const riskText = document.getElementById('risk');
+    const risk = parseFloat(document.getElementById('newRisk').value);
+
+    if (!isNaN(risk)) {
+        riskText.textContent = `Risk: ${risk}%`;
+
+        // Optionally, store the risk value in local storage
+        localStorage.setItem('riskLevel', risk);
+
+        // Close the modal
+        const riskModalElement = document.getElementById('riskModal');
+        const riskModal = bootstrap.Modal.getInstance(riskModalElement) || new bootstrap.Modal(riskModalElement);
+        riskModal.hide();
+    } else {
+        alert('Please enter a valid number for risk.');
+    }
+}
+
+// Save risk button
+document.getElementById('saveRisk').addEventListener('click', saveRisk);
+
+// Load the risk value from local storage or from the <p> tag when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const savedRisk = localStorage.getItem('riskLevel');
+    let initialRisk;
+
+    if (savedRisk !== null) {
+        initialRisk = savedRisk;
+    } else {
+        const riskText = document.getElementById('risk').textContent;
+        const riskMatch = riskText.match(/Risk: (\d+(\.\d+)?)/);
+        initialRisk = riskMatch ? riskMatch[1] : 3; // Default to 3 if not found
+    }
+
+    document.getElementById('risk').textContent = `Risk: ${initialRisk}%`;
+    document.getElementById('newRisk').value = initialRisk;
+});
+
+// Blur and Unblur PnL
+function toggleBlur() {
+    const pnlElement = document.getElementById('unrealizedPnL');
+    pnlElement.classList.toggle('blurred');
+    console.log("Toggle blur called");
+}
+
+document.getElementById('toggleBlurBtn').addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleBlur();
+});
+
+document.getElementById('toggleBlurBtn').addEventListener('touchend', (event) => {
+    event.preventDefault();
+    toggleBlur();
+});

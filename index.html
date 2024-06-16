@@ -16,6 +16,10 @@
             overflow-x: hidden;
             scroll-padding-top: 90px;
         }
+
+        .blurred {
+            filter: blur(5px);
+        }
     </style>
 </head>
 <body>
@@ -46,11 +50,41 @@
                     <li class="nav-item d-none d-lg-block">
                         <a href="#journal" class="nav-link lead">Trading Journal</a>
                     </li>
+                    <li class="nav-item d-lg-block">
+                        <a href="#riskModal" class="nav-link lead text-danger" data-bs-toggle="modal">Configure Risk</a>
+                    </li>
                 </ul>
              </div>
 
         </div>
     </nav>
+
+    <!-- Risk Configure Modal -->
+    <div class="modal fade" id="riskModal" tabindex="-1" aria-labelledby="riskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="riskModalLabel">Configure Risk</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Risk Configuration Form -->
+                    <form>
+                        <div class="mb-3">
+                            <label for="riskLevel" class="form-label">Risk:</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="newRisk" value="3" inputmode="decimal" pattern="[0-9],.*">
+                                <span class="input-group-text"><i class="bi bi-percent"></i></span>
+                            </div>
+                        </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button id="saveRisk" type="button" class="btn btn-primary" data-bs-dismiss="modal">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <!--Account Info-->
@@ -60,12 +94,15 @@
                 <div class="col-md-5 text-left text-md-start mx-4">
                     <p class="mt-2 text-muted">Account Balance: </p>
                     <p class="text-muted">Available Margin: </p>
-                    <p class="text-muted">Unrealized PnL: </p>
-                    <p class="text-muted">Risk: </p>
+                    <p class="text-muted">Unrealized PnL:</p>
+                    <p class="text-muted" id="risk">Risk: 3%</p>
                 </div>
             </div>
         </div>
     </section>
+    
+    
+    
 
 
     <!--Orders Placement-->
@@ -258,6 +295,9 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-12">
+                                <button class="btn btn-outline-primary w-100 mb-2">Add Comment</button>
+                            </div>
+                            <div class="col-12">
                                 <button class="btn btn-outline-secondary w-100 mb-2">Add Emotional State</button>
                             </div>
                         </div>
@@ -295,62 +335,7 @@
 
 
 
-    <!--Offcanvas-->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebar-label">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="sidebar-label">My Other Books</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body">
-            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Unde suscipit ipsum dolorum deleniti illum atque voluptas non placeat tempora provident.</p>
-            <!--dropdown-->
-            <div class="dropdown mt-3">
-                <button type="button" class="btn btn-secondary dropdown-toggle" id="book-dropdown" data-bs-toggle="dropdown">
-                    Choose a book title
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="book-dropdown">
-                    <li><a href="#" class="dropdown-item">Become a React Superhero 1</a></li>
-                    <li><a href="#" class="dropdown-item">Become a React Superhero 2</a></li>
-                    <li><a href="#" class="dropdown-item">Become a React Superhero 3</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!--Tabs-->
-    <div class="container my-5">
-        <nav>
-            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button type="button" class="nav-link active" id="nav-home-tab" data-bs-toggle="tab"
-                data-bs-target="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Home</button>
-
-                <button type="button" class="nav-link" id="nav-profile-tab" data-bs-toggle="tab"
-                data-bs-target="#nav-profile" role="tab" aria-controls="nav-profile" aria-selected="true">Profile</button>
-
-                <button type="button" class="nav-link" id="nav-contact-tab" data-bs-toggle="tab"
-                data-bs-target="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="true">Contact</button>
-            </div>
-        </nav>
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active p-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                <h2>Home</h2>   
-                <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptatem laudantium tempora veritatis nihil architecto, saepe culpa doloremque vitae repellendus eum sed ducimus ipsa temporibus explicabo, voluptas labore animi! Sunt, perferendis.</p>
-                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Optio voluptatum inventore, praesentium officiis asperiores sed?</p>
-            </div>
-
-            <div class="tab-pane fade p-3" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
-                <h2>Profile</h2>   
-                <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptatem laudantium tempora veritatis nihil architecto, saepe culpa doloremque vitae repellendus eum sed ducimus ipsa temporibus explicabo, voluptas labore animi! Sunt, perferendis.</p>
-                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Optio voluptatum inventore, praesentium officiis asperiores sed?</p>
-            </div>
-
-            <div class="tab-pane fade p-3" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">
-                <h2>Contact</h2>   
-                <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptatem laudantium tempora veritatis nihil architecto, saepe culpa doloremque vitae repellendus eum sed ducimus ipsa temporibus explicabo, voluptas labore animi! Sunt, perferendis.</p>
-                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Optio voluptatum inventore, praesentium officiis asperiores sed?</p>
-            </div>
-        </div>
-    </div>
+    
 
 
 
