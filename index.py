@@ -1,5 +1,6 @@
 import time
 
+
 from bingX.perpetual.v2 import PerpetualV2
 from bingX.perpetual.v2.types import HistoryOrder
 
