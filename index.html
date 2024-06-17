@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <title>Trading Buddy</title>
-    <link rel="manifest" href="/site.webmanifest"/>
+    <link rel="manifest" href="/site.webmanifest" />
     <style>
-        section{
+        section {
             padding: 60px, 0
         }
 
-        html, body {
+        html,
+        body {
             overflow-x: hidden;
             scroll-padding-top: 90px;
         }
@@ -22,6 +25,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <!--Navbar-->
@@ -34,12 +38,12 @@
             </a>
             <!-- toggle button for mobile nav-->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav"
-             aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+                aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
             </button>
 
             <!-- Navbar links-->
-             <div class="collapse navbar-collapse justify-content-end align-center" id="main-nav">
+            <div class="collapse navbar-collapse justify-content-end align-center" id="main-nav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a href="#cpos" class="nav-link lead">Current Positions</a>
@@ -54,7 +58,7 @@
                         <a href="#riskModal" class="nav-link lead text-danger" data-bs-toggle="modal">Configure Risk</a>
                     </li>
                 </ul>
-             </div>
+            </div>
 
         </div>
     </nav>
@@ -73,14 +77,16 @@
                         <div class="mb-3">
                             <label for="riskLevel" class="form-label">Risk:</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="newRisk" value="3" inputmode="decimal" pattern="[0-9],.*">
+                                <input type="number" class="form-control" id="newRisk" value="3" inputmode="decimal"
+                                    pattern="[0-9],.*">
                                 <span class="input-group-text"><i class="bi bi-percent"></i></span>
                             </div>
                         </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button id="saveRisk" type="button" class="btn btn-primary" data-bs-dismiss="modal">Save changes</button>
+                    <button id="saveRisk" type="button" class="btn btn-primary" data-bs-dismiss="modal">Save
+                        changes</button>
                 </div>
             </div>
         </div>
@@ -100,9 +106,9 @@
             </div>
         </div>
     </section>
-    
-    
-    
+
+
+
 
 
     <!--Orders Placement-->
@@ -113,24 +119,15 @@
                     <form>
                         <!--Dropdown Tool Selection-->
                         <label for="tool" class="form-label">Tool:</label>
-                            <div class="input-group mb-4">
-                                <span class="input-group-text">
+                        <div class="input-group mb-4">
+                            <span class="input-group-text">
                                 <i class="bi bi-currency-bitcoin"></i>
-                                </span>
+                            </span>
                             <select id="tool" class="form-select">
                                 <option value="pricing" selected>FTMUSDT</option>
                                 <option value="content">ADAUSDT</option>
                                 <option value="other">GMTUSDT</option>
                             </select>
-                        </div>
-
-                        <!--Leverage Selection-->
-                        <label for="leverage" class="form-label">Leverage:</label>
-                        <div class="mb-4 input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-x-lg"></i>
-                            </span>
-                            <input type="number" class="form-control" id="leverage" inputmode="numeric" pattern="[0-9]*">
                         </div>
 
                         <!--Entry Price Selection-->
@@ -139,7 +136,8 @@
                             <span class="input-group-text">
                                 <i class="bi bi-box-arrow-in-right"></i>
                             </span>
-                            <input type="text" class="form-control" id="entryp" placeholder="0.05" inputmode="decimal" pattern="[0-9.,]*">
+                            <input type="text" class="form-control" id="entryp" placeholder="0.05" inputmode="decimal"
+                                pattern="[0-9.,]*">
                         </div>
 
                         <!--Stop Price Selection-->
@@ -148,7 +146,18 @@
                             <span class="input-group-text">
                                 <i class="bi bi-box-arrow-in-left"></i>
                             </span>
-                            <input type="text" class="form-control" id="stopp" placeholder="0.04" inputmode="decimal" pattern="[0-9.,]*">
+                            <input type="text" class="form-control" id="stopp" placeholder="0.04" inputmode="decimal"
+                                pattern="[0-9.,]*">
+                        </div>
+
+                        <!--Leverage Selection-->
+                        <label for="leverage" class="form-label">Leverage:</label>
+                        <div class="mb-4 input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-x-lg"></i>
+                            </span>
+                            <input type="number" class="form-control" id="leverage" inputmode="numeric" pattern="[0-9]*"
+                                disabled>
                         </div>
 
                         <!-- Container for the dynamic forms -->
@@ -160,7 +169,8 @@
                                     <span class="input-group-text">
                                         <i class="bi bi-lightning-charge"></i>
                                     </span>
-                                    <input type="text" class="form-control" id="takep" placeholder="0.06" inputmode="decimal" pattern="[0-9.,]*">
+                                    <input type="text" class="form-control" id="takep" placeholder="0.06"
+                                        inputmode="decimal" pattern="[0-9.,]*">
                                 </div>
                             </div>
                         </div>
@@ -182,7 +192,8 @@
                                 <span class="input-group-text">
                                     <i class="bi bi-check-circle"></i>
                                 </span>
-                                <input type="text" class="form-control" id="stoe" value="1" inputmode="numeric" pattern="[0-9]*">
+                                <input type="text" class="form-control" id="stoe" value="1" inputmode="numeric"
+                                    pattern="[0-9]*">
                                 <span class="input-group-text">take</span>
                             </div>
                         </div>
@@ -202,7 +213,7 @@
                             <button id="opent" class="btn btn-lg btn-secondary me-2 disabled fs-1" type="button">
                                 Open
                             </button>
-                        </div>  
+                        </div>
                     </form>
                 </div>
             </div>
@@ -314,7 +325,6 @@
 
 
 
-    
 
 
 
@@ -335,13 +345,17 @@
 
 
 
-    
 
 
 
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
     <script src="script.js"></script>
 </body>
+
 </html>

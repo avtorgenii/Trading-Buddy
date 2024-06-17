@@ -75,15 +75,15 @@ toggleStopToEntryForm();
 
 
 // Open position button
-document.getElementById('entryp').addEventListener('click', function() {
-    updateButtonState();
+document.getElementById('entryp').addEventListener('blur', function () {
+    updateEntryFormState();
 });
 
-document.getElementById('stopp').addEventListener('input', function() {
-    updateButtonState();
+document.getElementById('stopp').addEventListener('blur', function () {
+    updateEntryFormState();
 });
 
-function updateButtonState() {
+function updateEntryFormState() {
     const stopPrice = parseFloat(document.getElementById('stopp').value);
     const entryPrice = parseFloat(document.getElementById('entryp').value);
     const button = document.getElementById('opent');
@@ -95,11 +95,15 @@ function updateButtonState() {
             button.classList.add('btn-success');
             button.textContent = 'Open Long';
 
+            document.getElementById('leverage').disabled = false;
+
             tradeInfo.classList.remove('d-none');
         } else if (stopPrice > entryPrice) {
             button.classList.remove('btn-success', 'btn-secondary', 'disabled');
             button.classList.add('btn-danger');
             button.textContent = 'Open Short';
+
+            document.getElementById('leverage').disabled = true;
 
             tradeInfo.classList.remove('d-none');
         } else {
@@ -119,7 +123,7 @@ function updateButtonState() {
 }
 
 // Initial call to set the correct state of the button
-updateButtonState();
+updateEntryFormState();
 
 
 function saveRisk() {
