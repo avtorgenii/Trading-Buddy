@@ -1,5 +1,5 @@
 import os.path
-from sqlalchemy import create_engine, ForeignKey, Table, Column, String, Integer, LargeBinary, DateTime, Float
+from sqlalchemy import create_engine, ForeignKey, Table, Column, String, Integer, LargeBinary, DateTime, Float, inspect
 from sqlalchemy.orm import sessionmaker, declarative_base
 import pandas as pd
 from datetime import datetime, time
@@ -64,7 +64,7 @@ def excel_to_csv(excel):
     df.to_csv('df.csv')
 
 
-def csv_to_sql(csv_file, db_session):
+def csv_to_sql(csv_file, db_session, deposit, risk):
     df = pd.read_csv(csv_file)
 
     for tool in set(df['tool']):
@@ -95,6 +95,8 @@ def csv_to_sql(csv_file, db_session):
 
         db_session.add(trade)
 
+    db_session.add(Account(account_name="BingX", deposit=deposit, risk=risk))
+
     db_session.commit()
 
 
@@ -122,6 +124,24 @@ def add_screens_to_rows(row_ids, db_session):
 
 
 Base = declarative_base()
+
+
+class Account(Base):
+    __tablename__ = 'accounts'
+
+    account_id = Column(Integer, primary_key=True, autoincrement=True)
+    account_name = Column(String, nullable=False)
+    deposit = Column(Float, nullable=False)
+    risk = Column(Float, nullable=False)
+
+    def __init__(self, account_name, deposit, risk):
+        super().__init__()
+        self.account_name = account_name
+        self.deposit = deposit
+        self.risk = risk
+
+    def __repr__(self):
+        return f"<Account(account_name={self.account_name}, deposit={self.deposit}, risk={self.risk})>"
 
 
 class Tool(Base):
@@ -182,17 +202,24 @@ class Trade(Base):
 
     def __repr__(self):
         return (
-            f"<Trade(trade_id={self.trade_id}, tool_id={self.tool_id}, side={self.side}, price_of_entry={self.price_of_entry}, "
+            f"<Trade(trade_id={self.trade_id}, tool_id={self.tool_id}, side={self.side}, price_of_entry={self.price_of_entry},"
             f"volume={self.volume}, risk_usd={self.risk_usd}, tags={self.tags}, date_time={self.date_time}, "
-            f"reason_of_entry={self.reason_of_entry}, price_of_exit={self.price_of_exit}, reason_of_exit={self.reason_of_exit}, "
+            f"reason_of_entry={self.reason_of_entry}, price_of_exit={self.price_of_exit}, reason_of_exit={self.reason_of_exit},"
             f"pnl_usdt={self.pnl_usdt}, commission={self.commission}, comment={self.comment}, emotional_state={self.emotional_state})>")
 
 
-if __name__ == '__main__':
-    engine = create_engine("sqlite:///trading.db", echo=True)
+def get_session(echo):
+    engine = create_engine("sqlite:///trading.db", echo=echo)
     Base.metadata.create_all(bind=engine)
-
     Session = sessionmaker(bind=engine)
-    session = Session()
 
-    #session.commit()
+    return Session()
+
+if __name__ == '__main__':
+    session = get_session()
+    #
+    # csv_to_sql("df.csv", session, 90.34, 3)
+    #
+    # session.commit()
+
+    pass

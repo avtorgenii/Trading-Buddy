@@ -2,25 +2,30 @@ import time
 from bingX.perpetual.v2 import PerpetualV2
 from bingX.perpetual.v2.types import HistoryOrder
 
+from db_creator import get_session
+from db_creator import Account
+
 import math_helper as mh
 
 
 class Dealer:
-    def __init__(self, deposit, risk):
+    def __init__(self):
         """
-        Initializing BingX dealer with needed info.
-
-        :param risk: Risk in percents.
-        :type risk: float
+        Initializing Exchange dealer with needed info.
         """
 
         self.API_KEY = "g1bdJM9yg7bx07R614mv7zBRYxN05L10gglaiwsOWcX2JIqOEzhoZfzM75nVyZBNLp510vb0YxRgF8Zg5Sw"
         self.SECRET_KEY = "1hdUt8cDl5o3K5mzJeX0k71OzhERLVWnT984jp5gsj4egmz4P4fTbvyoUPga3RQfhuGTchRA3T96lTIJOkQ"
+        self.ACCOUNT_NAME = "BingX"
 
         self.client = PerpetualV2(api_key=self.API_KEY, secret_key=self.SECRET_KEY)
 
-        self.deposit = deposit
-        self.risk = risk
+        self.session = get_session(echo=False)
+
+        account = self.session.query(Account).filter_by(account_name=self.ACCOUNT_NAME).first()
+
+        self.deposit = account.deposit
+        self.risk = account.risk
 
     # data = client.account.get_details()
     # data = client.trade.get_orders_history(HistoryOrder(symbol="OCEAN-USDT",
@@ -68,10 +73,12 @@ class Dealer:
         return res
 
 
-dealer = Dealer(123.46, 3)
+
+
+dealer = Dealer()
 
 #data = dealer.get_account_details()
 #data = dealer.calc_position_volume_and_margin("GMT-USDT", 0.2312, 0.2349)
 
 
-print(data)
+#print(data)
