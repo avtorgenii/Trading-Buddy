@@ -1,6 +1,5 @@
-import time
 from bingX.perpetual.v2 import PerpetualV2
-from bingX.perpetual.v2.types import HistoryOrder
+from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType, StopLoss)
 
 from db_creator import get_session
 from db_creator import Account
@@ -72,13 +71,37 @@ class Dealer:
 
         return res
 
+    def place_order(self, tool, trigger_p, entry_p, stop_p, take_profits):
+        # Switch Margin mode before placing order
+        self.client.trade.change_margin_mode(symbol=tool, margin_type=MarginType.CROSSED)
 
+        # BUY order
+        order_side = Side.BUY if entry_p > stop_p else Side.SELL
+        pos_side = PositionSide.LONG if entry_p > stop_p else PositionSide.SHORT
+        volume = self.calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
+        order_type = OrderType.TRIGGER_LIMIT
+        stop_loss = StopLoss(stopPrice=stop_p, price=stop_p)
+
+        order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
+                      price=entry_p, stopPrice=trigger_p, stopLoss=stop_loss)
+
+        orderId = self.client.trade.create_order(order)['order']['orderId']
+
+        # STOP order
+        # order_side = Side.SELL if entry_p > stop_p else Side.BUY
+        # order_type = OrderType.STOP_MARKET
+        #
+        # order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
+        #               price=stop_p, stopPrice=stop_p)
+        #
+        # self.client.trade.create_order(order)
 
 
 dealer = Dealer()
 
-#data = dealer.get_account_details()
+data = dealer.get_account_details()
 #data = dealer.calc_position_volume_and_margin("GMT-USDT", 0.2312, 0.2349)
 
+dealer.place_order("GMT-USDT", 0.1558, 0.1534, 0.1509, [0.16])
 
-#print(data)
+print(data)

@@ -28,9 +28,9 @@ def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_ma
 
     if volume >= trade_min_quantity:
         if available_margin >= required_margin:
-            return volume, round(required_margin, 2)
+            return {"volume": volume, "margin": round(required_margin, 2)}
         else:
             allowed_volume = floor_to_digits(available_margin / entry_p, quantity_precision)
-            return allowed_volume, round(available_margin - allowed_volume * entry_p, 2)
+            return {"volume": allowed_volume, "margin": round(available_margin - allowed_volume * entry_p, 2)}
     else:
-        return 0, 0
+        return {"volume": 0, "margin": 0}
