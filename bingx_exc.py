@@ -1,5 +1,6 @@
 from bingX.perpetual.v2 import PerpetualV2
-from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType, StopLoss)
+
+from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
 
 from db_creator import get_session
 from db_creator import Account
@@ -13,6 +14,8 @@ class Dealer:
         Initializing Exchange dealer with needed info.
         """
 
+        print("Inited dealer")
+
         self.API_KEY = "g1bdJM9yg7bx07R614mv7zBRYxN05L10gglaiwsOWcX2JIqOEzhoZfzM75nVyZBNLp510vb0YxRgF8Zg5Sw"
         self.SECRET_KEY = "1hdUt8cDl5o3K5mzJeX0k71OzhERLVWnT984jp5gsj4egmz4P4fTbvyoUPga3RQfhuGTchRA3T96lTIJOkQ"
         self.ACCOUNT_NAME = "BingX"
@@ -25,14 +28,6 @@ class Dealer:
 
         self.deposit = account.deposit
         self.risk = account.risk
-
-    # data = client.account.get_details()
-    # data = client.trade.get_orders_history(HistoryOrder(symbol="OCEAN-USDT",
-    #                                                     startTime=1716422400000,
-    #                                                     endTime=1716681600000,
-    #                                                     limit=500))
-    #
-    # print(data)
 
     def get_account_details(self):
         """
@@ -71,37 +66,36 @@ class Dealer:
 
         return res
 
-    def place_order(self, tool, trigger_p, entry_p, stop_p, take_profits):
-        # Switch Margin mode before placing order
+    def switch_margin_mode_to_cross(self, tool):
         self.client.trade.change_margin_mode(symbol=tool, margin_type=MarginType.CROSSED)
 
-        # BUY order
+    def place_primary_order(self, tool, trigger_p, entry_p, stop_p, pos_side):
         order_side = Side.BUY if entry_p > stop_p else Side.SELL
-        pos_side = PositionSide.LONG if entry_p > stop_p else PositionSide.SHORT
         volume = self.calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
         order_type = OrderType.TRIGGER_LIMIT
-        stop_loss = StopLoss(stopPrice=stop_p, price=stop_p)
 
         order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
-                      price=entry_p, stopPrice=trigger_p, stopLoss=stop_loss)
+                      price=entry_p, stopPrice=trigger_p)
 
-        orderId = self.client.trade.create_order(order)['order']['orderId']
+        order_response = self.client.trade.create_order(order)
 
-        # STOP order
-        # order_side = Side.SELL if entry_p > stop_p else Side.BUY
-        # order_type = OrderType.STOP_MARKET
-        #
-        # order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
-        #               price=stop_p, stopPrice=stop_p)
-        #
-        # self.client.trade.create_order(order)
+        return order_response['order']['orderId']
+
+    def place_stop_loss_order(self, tool, stop_p, volume, pos_side):
+        order_side = Side.SELL if pos_side == PositionSide.LONG else Side.BUY
+        order_type = OrderType.STOP_MARKET
+
+        order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
+                      stopPrice=stop_p, price=stop_p)
+
+        self.client.trade.create_order(order)
+
+    def place_order(self, tool, trigger_p, entry_p, stop_p, take_profits):
+        self.switch_margin_mode_to_cross(tool)
+
+        pos_side = PositionSide.LONG if entry_p > stop_p else PositionSide.SHORT
+
+        primary_order_id = self.place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side)
 
 
-dealer = Dealer()
 
-data = dealer.get_account_details()
-#data = dealer.calc_position_volume_and_margin("GMT-USDT", 0.2312, 0.2349)
-
-dealer.place_order("GMT-USDT", 0.1558, 0.1534, 0.1509, [0.16])
-
-print(data)

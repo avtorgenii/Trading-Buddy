@@ -215,11 +215,11 @@ def get_session(echo):
 
     return Session()
 
-if __name__ == '__main__':
-    session = get_session()
-    #
-    # csv_to_sql("df.csv", session, 90.34, 3)
-    #
-    # session.commit()
-
-    pass
+# if __name__ == '__main__':
+#     session = get_session()
+#     #
+#     # csv_to_sql("df.csv", session, 90.34, 3)
+#     #
+#     # session.commit()
+#
+#     pass
