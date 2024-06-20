@@ -1,101 +1,119 @@
 from bingX.perpetual.v2 import PerpetualV2
-
 from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
 
-from db_creator import get_session
-from db_creator import Account
-
+from db_creator import get_session, Account
 import math_helper as mh
+import runtime_manager as rm
+
+API_KEY = "g1bdJM9yg7bx07R614mv7zBRYxN05L10gglaiwsOWcX2JIqOEzhoZfzM75nVyZBNLp510vb0YxRgF8Zg5Sw"
+SECRET_KEY = "1hdUt8cDl5o3K5mzJeX0k71OzhERLVWnT984jp5gsj4egmz4P4fTbvyoUPga3RQfhuGTchRA3T96lTIJOkQ"
+ACCOUNT_NAME = "BingX"
+
+client = PerpetualV2(api_key=API_KEY, secret_key=SECRET_KEY)
+session = get_session(echo=False)
+
+account = session.query(Account).filter_by(account_name=ACCOUNT_NAME).first()
+deposit = 1 #account.deposit
+risk = account.risk
 
 
-class Dealer:
-    def __init__(self):
-        """
-        Initializing Exchange dealer with needed info.
-        """
+def _get_account_details():
+    """
+    Returns the account details.
+    :return: A tuple containing balance, unrealized profit, and available margin.
+    """
+    details = client.account.get_details()['balance']
+    return {"deposit": deposit, "unrealized_pnl": float(details['unrealizedProfit']),
+            "available_margin": float(details['availableMargin'])}
 
-        print("Inited dealer")
 
-        self.API_KEY = "g1bdJM9yg7bx07R614mv7zBRYxN05L10gglaiwsOWcX2JIqOEzhoZfzM75nVyZBNLp510vb0YxRgF8Zg5Sw"
-        self.SECRET_KEY = "1hdUt8cDl5o3K5mzJeX0k71OzhERLVWnT984jp5gsj4egmz4P4fTbvyoUPga3RQfhuGTchRA3T96lTIJOkQ"
-        self.ACCOUNT_NAME = "BingX"
+def _get_tool_precision_info(tool):
+    info = client.market.get_contract_info(tool)
+    return {"quantityPrecision": info['quantityPrecision'], "pricePrecision": info['pricePrecision'],
+            "tradeMinQuantity": info['tradeMinQuantity']}
 
-        self.client = PerpetualV2(api_key=self.API_KEY, secret_key=self.SECRET_KEY)
 
-        self.session = get_session(echo=False)
+def _get_max_leverage(tool):
+    info = client.trade.get_leverage(tool)
+    return {"long": info["maxLongLeverage"], "short": info["maxShortLeverage"]}
 
-        account = self.session.query(Account).filter_by(account_name=self.ACCOUNT_NAME).first()
 
-        self.deposit = account.deposit
-        self.risk = account.risk
+def _get_current_leverage(tool):
+    # Temporary, in future leverage should be fetched from frontend
+    return _get_max_leverage(tool)["long"]
 
-    def get_account_details(self):
-        """
-        Returns the account details.
-        :return: A tuple containing balance, unrealized profit, and available margin.
-        """
-        details = self.client.account.get_details()['balance']
 
-        return {"deposit": self.deposit, "unrealized_pnl": float(details['unrealizedProfit']),
-                "available_margin": float(details['availableMargin'])}
+def _calc_position_volume_and_margin(tool, entry_p, stop_p):
+    available_margin = _get_account_details()["available_margin"]
+    leverage = _get_current_leverage(tool)
 
-    def get_tool_precision_info(self, tool):
-        info = self.client.market.get_contract_info(tool)
+    precision_info = _get_tool_precision_info(tool)
+    quantity_precision = precision_info['quantityPrecision']
+    trade_min_quantity = precision_info['tradeMinQuantity']
 
-        return {"quantityPrecision": info['quantityPrecision'], "pricePrecision": info['pricePrecision'],
-                "tradeMinQuantity": info['tradeMinQuantity']}
+    res = mh.calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage,
+                                             quantity_precision, trade_min_quantity)
+    return res
 
-    def get_max_leverage(self, tool):
-        info = self.client.trade.get_leverage(tool)
-        return {"long": info["maxLongLeverage"], "short": info["maxShortLeverage"]}
 
-    def get_current_leverage(self, tool):
-        # Temporary, in future leverage should be fetched from frontend
-        return self.get_max_leverage(tool)["long"]
+def _switch_margin_mode_to_cross(tool):
+    client.trade.change_margin_mode(symbol=tool, margin_type=MarginType.CROSSED)
 
-    def calc_position_volume_and_margin(self, tool, entry_p, stop_p):
-        available_margin = self.get_account_details()["available_margin"]
-        leverage = self.get_current_leverage(tool)
 
-        precision_info = self.get_tool_precision_info(tool)
-        quantity_precision = precision_info['quantityPrecision']
-        trade_min_quantity = precision_info['tradeMinQuantity']
+def _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume):
+    order_side = Side.BUY if entry_p > stop_p else Side.SELL
+    order_type = OrderType.TRIGGER_LIMIT
 
-        res = mh.calc_position_volume_and_margin(self.deposit, self.risk, entry_p, stop_p, available_margin, leverage,
-                                                 quantity_precision, trade_min_quantity)
+    order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
+                  price=entry_p, stopPrice=trigger_p)
+    order_response = client.trade.create_order(order)
 
-        return res
+    return order_response['order']['orderId']
 
-    def switch_margin_mode_to_cross(self, tool):
-        self.client.trade.change_margin_mode(symbol=tool, margin_type=MarginType.CROSSED)
 
-    def place_primary_order(self, tool, trigger_p, entry_p, stop_p, pos_side):
-        order_side = Side.BUY if entry_p > stop_p else Side.SELL
-        volume = self.calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
-        order_type = OrderType.TRIGGER_LIMIT
+def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_after):
+    """
+    :param tool: Tool to trade
+    :param trigger_p: Price level on which to trigger placing limit order
+    :param entry_p: Entry level
+    :param stop_p: Stop-loss level
+    :param take_profits: List of take-profits levels
+    :param move_stop_after: After which take stop-loss will be moved to entry level
+    :return:
+    """
+    _switch_margin_mode_to_cross(tool)
 
+    pos_side = PositionSide.LONG if entry_p > stop_p else PositionSide.SHORT
+    volume = _calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
+
+    _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume)
+
+    # Adding order to runtime order book
+    rm.add_order(tool, entry_p, stop_p, take_profits, move_stop_after, volume, "NEW")
+
+
+def place_stop_loss_order(tool, stop_p, volume, pos_side):
+    order_side = Side.SELL if pos_side == PositionSide.LONG else Side.BUY
+    order_type = OrderType.STOP_MARKET
+
+    order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
+                  stopPrice=stop_p)
+    client.trade.create_order(order)
+
+    print(f"PLACED SL: tp: {stop_p}, volume: {volume}")
+
+
+def place_take_profit_orders(tool, take_profits, cum_volume, pos_side):
+    order_side = Side.SELL if pos_side == PositionSide.LONG else Side.BUY
+    order_type = OrderType.TAKE_PROFIT_MARKET
+
+    quantity_precision = _get_tool_precision_info(tool)['quantityPrecision']
+
+    volumes = mh.calc_take_profits_volumes(cum_volume, quantity_precision, len(take_profits))
+
+    for take_profit, volume in zip(take_profits, volumes):
         order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
-                      price=entry_p, stopPrice=trigger_p)
+                      stopPrice=take_profit)
+        client.trade.create_order(order)
 
-        order_response = self.client.trade.create_order(order)
-
-        return order_response['order']['orderId']
-
-    def place_stop_loss_order(self, tool, stop_p, volume, pos_side):
-        order_side = Side.SELL if pos_side == PositionSide.LONG else Side.BUY
-        order_type = OrderType.STOP_MARKET
-
-        order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
-                      stopPrice=stop_p, price=stop_p)
-
-        self.client.trade.create_order(order)
-
-    def place_order(self, tool, trigger_p, entry_p, stop_p, take_profits):
-        self.switch_margin_mode_to_cross(tool)
-
-        pos_side = PositionSide.LONG if entry_p > stop_p else PositionSide.SHORT
-
-        primary_order_id = self.place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side)
-
-
-
+        print(f"PLACED TP: tp: {take_profit}, volume: {volume}")

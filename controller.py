@@ -1,8 +1,6 @@
-from bingx_exc import Dealer
+import bingx_exc as be
 
-dealer = Dealer()
-
-data = dealer.get_account_details()
+data = be._get_account_details()
 print(data)
 
-# dealer.place_order("GMT-USDT", 0.1627, 0.165, 0.1509, [0.16])
+be.place_open_order("OP-USDT", 1.9253, 1.9253, 1.9104, [1.9452, 1.9478], 1)

@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_DOWN
+import math
 
 
 def floor_to_digits(number, digits):
@@ -12,8 +12,8 @@ def floor_to_digits(number, digits):
     :return: The floored number.
     :rtype: float
     """
-    context = Decimal(number).scaleb(-digits).quantize(Decimal('1'), rounding=ROUND_DOWN).scaleb(digits)
-    return float(context)
+    factor = 10 ** digits
+    return math.floor(number * factor) / factor
 
 
 def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage, quantity_precision,
@@ -30,7 +30,45 @@ def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_ma
         if available_margin >= required_margin:
             return {"volume": volume, "margin": round(required_margin, 2)}
         else:
-            allowed_volume = floor_to_digits(available_margin / entry_p, quantity_precision)
-            return {"volume": allowed_volume, "margin": round(available_margin - allowed_volume * entry_p, 2)}
+            allowed_volume = floor_to_digits(leverage * available_margin / entry_p, quantity_precision)
+            return {"volume": allowed_volume,
+                    "margin": round(allowed_volume * entry_p / leverage, 2)}
     else:
         return {"volume": 0, "margin": 0}
+
+
+def calc_take_profits_volumes(volume, quantity_precision, num_take_profits):
+    """
+    Calculate the volumes for take profits.
+
+    :param volume: Total volume to be distributed among take profits.
+    :param quantity_precision: Precision for the volume.
+    :param num_take_profits: Number of take profit targets.
+    :return: List of volumes for take profits, largest volume first.
+    """
+
+    # Round function that respects the given precision
+    def round_with_precision(value, precision):
+        factor = 10 ** precision
+        return round(value * factor) / factor
+
+    # Calculate base volume for each take profit
+    base_volume = volume / num_take_profits
+
+    # Round the base volume according to the precision
+    base_volume = round_with_precision(base_volume, quantity_precision)
+
+    # Initialize the volumes list with the base volume
+    take_profits_volumes = [base_volume] * num_take_profits
+
+    # Calculate the remaining volume due to rounding
+    remaining_volume = round_with_precision(volume - sum(take_profits_volumes), quantity_precision)
+
+    # Adjust the first take profit volume to account for the remaining volume
+    if remaining_volume != 0:
+        take_profits_volumes[0] += remaining_volume
+
+    # Sort volumes so the largest volume is first
+    take_profits_volumes.sort(reverse=True)
+
+    return take_profits_volumes
