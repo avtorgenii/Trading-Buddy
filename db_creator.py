@@ -1,5 +1,5 @@
 import os.path
-from sqlalchemy import create_engine, ForeignKey, Table, Column, String, Integer, LargeBinary, DateTime, Float, inspect
+from sqlalchemy import create_engine, Table, Column, String, Integer, LargeBinary, DateTime, Float
 from sqlalchemy.orm import sessionmaker, declarative_base
 import pandas as pd
 from datetime import datetime, time
@@ -67,17 +67,11 @@ def excel_to_csv(excel):
 def csv_to_sql(csv_file, db_session, deposit, risk):
     df = pd.read_csv(csv_file)
 
-    for tool in set(df['tool']):
-        db_session.add(Tool(tool))
-
-    db_session.commit()
-
     dicts = df.to_dict(orient='records')
 
     for d in dicts:
-        tool_id = db_session.query(Tool).filter_by(tool_name=d['tool']).first().tool_id
         trade = Trade(
-            tool_id=tool_id,
+            tool_id=d['tool'],
             side=d['side'],
             price_of_entry=d['price_of_entry'],
             volume=d['volume'],
@@ -98,10 +92,6 @@ def csv_to_sql(csv_file, db_session, deposit, risk):
     db_session.add(Account(account_name="BingX", deposit=deposit, risk=risk))
 
     db_session.commit()
-
-
-def get_tool_id(tool_name, db_session):
-    return db_session.query(Tool).filter_by(tool_name=tool_name).first().tool_id
 
 
 def add_screens_to_rows(row_ids, db_session):
@@ -144,25 +134,11 @@ class Account(Base):
         return f"<Account(account_name={self.account_name}, deposit={self.deposit}, risk={self.risk})>"
 
 
-class Tool(Base):
-    __tablename__ = 'tools'
-
-    tool_id = Column(Integer, primary_key=True, autoincrement=True)
-    tool_name = Column(String, nullable=False, unique=True)
-
-    def __init__(self, tool_name):
-        super().__init__()
-        self.tool_name = tool_name
-
-    def __repr__(self):
-        return f"<Tool(tool_id={self.tool_id}, tool_name={self.tool_name})>"
-
-
 class Trade(Base):
     __tablename__ = 'journal'
 
     trade_id = Column(Integer, primary_key=True, autoincrement=True)
-    tool_id = Column(Integer, ForeignKey('tools.tool_id'), nullable=False)
+    tool = Column(String, nullable=False)
     side = Column(String, nullable=False)
     tags = Column(String, nullable=True)
     date_time = Column(DateTime, nullable=True)
@@ -206,14 +182,6 @@ class Trade(Base):
             f"volume={self.volume}, risk_usd={self.risk_usd}, tags={self.tags}, date_time={self.date_time}, "
             f"reason_of_entry={self.reason_of_entry}, price_of_exit={self.price_of_exit}, reason_of_exit={self.reason_of_exit},"
             f"pnl_usdt={self.pnl_usdt}, commission={self.commission}, comment={self.comment}, emotional_state={self.emotional_state})>")
-
-
-def get_session(echo):
-    engine = create_engine("sqlite:///trading.db", echo=echo)
-    Base.metadata.create_all(bind=engine)
-    Session = sessionmaker(bind=engine)
-
-    return Session()
 
 # if __name__ == '__main__':
 #     session = get_session()

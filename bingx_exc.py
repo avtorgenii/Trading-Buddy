@@ -1,7 +1,7 @@
 from bingX.perpetual.v2 import PerpetualV2
 from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
 
-from db_creator import get_session, Account
+from db_manager import DBInterface
 import math_helper as mh
 import runtime_manager as rm
 
@@ -10,11 +10,10 @@ SECRET_KEY = "1hdUt8cDl5o3K5mzJeX0k71OzhERLVWnT984jp5gsj4egmz4P4fTbvyoUPga3RQfhu
 ACCOUNT_NAME = "BingX"
 
 client = PerpetualV2(api_key=API_KEY, secret_key=SECRET_KEY)
-session = get_session(echo=False)
 
-account = session.query(Account).filter_by(account_name=ACCOUNT_NAME).first()
-deposit = 1 #account.deposit
-risk = account.risk
+db_interface = DBInterface(ACCOUNT_NAME)
+
+deposit, risk = db_interface.get_account_details()
 
 
 def _get_account_details():
