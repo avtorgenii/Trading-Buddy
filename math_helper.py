@@ -16,8 +16,7 @@ def floor_to_digits(number, digits):
     return math.floor(number * factor) / factor
 
 
-def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage, quantity_precision,
-                                    trade_min_quantity):
+def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage, quantity_precision):
     diff_pips = abs(entry_p - stop_p)
 
     allowed_loss = deposit * risk / 100
@@ -26,15 +25,12 @@ def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_ma
 
     required_margin = volume * entry_p / leverage
 
-    if volume >= trade_min_quantity:
-        if available_margin >= required_margin:
-            return {"volume": volume, "margin": round(required_margin, 2)}
-        else:
-            allowed_volume = floor_to_digits(leverage * available_margin / entry_p, quantity_precision)
-            return {"volume": allowed_volume,
-                    "margin": round(allowed_volume * entry_p / leverage, 2)}
+    if available_margin >= required_margin:
+        return {"volume": volume, "margin": round(required_margin, 2)}
     else:
-        return {"volume": 0, "margin": 0}
+        allowed_volume = floor_to_digits(leverage * available_margin / entry_p, quantity_precision)
+
+        return {"volume": allowed_volume, "margin": round(allowed_volume * entry_p / leverage, 2)}
 
 
 def calc_take_profits_volumes(volume, quantity_precision, num_take_profits):

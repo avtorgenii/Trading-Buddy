@@ -1,14 +1,16 @@
 {
     "OP-USDT": {
-        "entry_p": 1.9253,
-        "stop_p": 1.9,
+        "entry_p": 1.8346,
+        "stop_p": 1.8,
         "take_ps": [
-            1.9452,
-            1.9478
+            1.8348,
+            1.85
         ],
         "pos_side": "LONG",
-        "move_stop_after": 1,
+        "move_stop_after": 0,
+        "current_volume": 0.7,
         "left_volume_to_fill": 0,
-        "last_status": "FILLED"
+        "last_status": "FILLED",
+        "breakeven": true
     }
 }

@@ -71,7 +71,7 @@ def csv_to_sql(csv_file, db_session, deposit, risk):
 
     for d in dicts:
         trade = Trade(
-            tool_id=d['tool'],
+            tool=d['tool'],
             side=d['side'],
             price_of_entry=d['price_of_entry'],
             volume=d['volume'],
@@ -135,7 +135,7 @@ class Account(Base):
 
 
 class Trade(Base):
-    __tablename__ = 'journal'
+    __tablename__ = 'trades'
 
     trade_id = Column(Integer, primary_key=True, autoincrement=True)
     tool = Column(String, nullable=False)
@@ -155,11 +155,11 @@ class Trade(Base):
     screen = Column(LargeBinary, nullable=True)
     screen_zoomed = Column(LargeBinary, nullable=True)
 
-    def __init__(self, tool_id, side, price_of_entry, volume, risk_usd, tags=None, date_time=None, reason_of_entry=None,
+    def __init__(self, tool, side, price_of_entry, volume, risk_usd, tags=None, date_time=None, reason_of_entry=None,
                  price_of_exit=None, reason_of_exit=None, pnl_usdt=None, commission=None, comment=None,
                  emotional_state=None, screen=None, screen_zoomed=None):
         super().__init__()
-        self.tool_id = tool_id
+        self.tool = tool
         self.side = side
         self.price_of_entry = price_of_entry
         self.volume = volume
@@ -183,11 +183,24 @@ class Trade(Base):
             f"reason_of_entry={self.reason_of_entry}, price_of_exit={self.price_of_exit}, reason_of_exit={self.reason_of_exit},"
             f"pnl_usdt={self.pnl_usdt}, commission={self.commission}, comment={self.comment}, emotional_state={self.emotional_state})>")
 
-# if __name__ == '__main__':
-#     session = get_session()
-#     #
-#     # csv_to_sql("df.csv", session, 90.34, 3)
-#     #
-#     # session.commit()
-#
-#     pass
+
+def create_db(echo=False):
+    """
+    Delete .db file before firing this func
+    """
+    engine = create_engine("sqlite:///trading.db", echo=echo)
+
+    Base.metadata.create_all(bind=engine)
+
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    csv_to_sql("used/df.csv", session, 90.34, 3)
+
+    add_screens_to_rows(range(137, 147), session)
+
+    session.commit()
+
+
+if __name__ == '__main__':
+    create_db()

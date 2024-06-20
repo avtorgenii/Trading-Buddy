@@ -1,5 +1,6 @@
 from bingX.perpetual.v2 import PerpetualV2
 from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
+from bingX.exceptions import ClientError
 
 from db_manager import DBInterface
 import math_helper as mh
@@ -28,8 +29,7 @@ def _get_account_details():
 
 def _get_tool_precision_info(tool):
     info = client.market.get_contract_info(tool)
-    return {"quantityPrecision": info['quantityPrecision'], "pricePrecision": info['pricePrecision'],
-            "tradeMinQuantity": info['tradeMinQuantity']}
+    return {"quantityPrecision": info['quantityPrecision'], "pricePrecision": info['pricePrecision']}
 
 
 def _get_max_leverage(tool):
@@ -42,16 +42,19 @@ def _get_current_leverage(tool):
     return _get_max_leverage(tool)["long"]
 
 
+def _change_leverage_to_current(tool, pos_side):
+    client.trade.change_leverage(tool, pos_side, _get_current_leverage(tool))
+
+
 def _calc_position_volume_and_margin(tool, entry_p, stop_p):
     available_margin = _get_account_details()["available_margin"]
     leverage = _get_current_leverage(tool)
 
     precision_info = _get_tool_precision_info(tool)
     quantity_precision = precision_info['quantityPrecision']
-    trade_min_quantity = precision_info['tradeMinQuantity']
 
     res = mh.calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage,
-                                             quantity_precision, trade_min_quantity)
+                                             quantity_precision)
     return res
 
 
@@ -83,12 +86,21 @@ def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_a
     _switch_margin_mode_to_cross(tool)
 
     pos_side = PositionSide.LONG if entry_p > stop_p else PositionSide.SHORT
+
+    _change_leverage_to_current(tool, pos_side)
+
     volume = _calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
 
-    _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume)
+    if volume != 0:
+        try:
+            _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume)
 
-    # Adding order to runtime order book
-    rm.add_order(tool, entry_p, stop_p, take_profits, move_stop_after, volume, "NEW")
+            # Adding primary order info to runtime order book
+            rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume, "NEW")
+        except ClientError:
+            print("CANNOT PLACE ORDER, YOUR VOLUME IS TOO SMALL")
+    else:
+        print("CANNOT PLACE ORDER, YOUR VOLUME IS TOO SMALL")
 
 
 def place_stop_loss_order(tool, stop_p, volume, pos_side):
@@ -99,7 +111,18 @@ def place_stop_loss_order(tool, stop_p, volume, pos_side):
                   stopPrice=stop_p)
     client.trade.create_order(order)
 
-    print(f"PLACED SL: tp: {stop_p}, volume: {volume}")
+    print(f"PLACED SL: price: {stop_p}, volume: {volume}")
+
+def cancel_stop_loss_for_tool(tool):
+    orders = get_orders_for_tool(tool)
+
+    print(orders)
+
+    stop_order_id = orders['stop']['orderId']
+
+    resp = client.trade.cancel_order(stop_order_id, tool)
+
+    print(f"STOP ORDER CANCELATION RESPONSE: {resp}")
 
 
 def place_take_profit_orders(tool, take_profits, cum_volume, pos_side):
@@ -113,6 +136,22 @@ def place_take_profit_orders(tool, take_profits, cum_volume, pos_side):
     for take_profit, volume in zip(take_profits, volumes):
         order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
                       stopPrice=take_profit)
+
         client.trade.create_order(order)
 
         print(f"PLACED TP: tp: {take_profit}, volume: {volume}")
+
+
+def get_orders_for_tool(tool):
+    orders = client.trade.get_open_orders(tool)['orders']
+
+    tps = []
+    stop = None
+
+    for order in orders:
+        if order['type'] == "TAKE_PROFIT_MARKET":
+            tps.append(order)
+        elif order['type'] == "STOP_MARKET":
+            stop = order
+
+    return {'takes': tps, 'stop': stop}

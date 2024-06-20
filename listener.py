@@ -1,4 +1,6 @@
 import json
+import time
+
 import websocket
 import gzip
 import io
@@ -36,58 +38,82 @@ class Listener:
                 print("Ping")
                 ws.send("Pong")
             elif "ORDER_TRADE_UPDATE" in utf8_data:
+                print("ORDER UPDATE")
+
                 dict_data = json.loads(utf8_data)
+
+                print(dict_data)
 
                 order = dict_data["o"]
 
                 tool = order["s"]
                 order_type = order["o"]
+                order_id = str(order["i"])
                 direction = order["S"]
-                volume = order["q"]
-                avg_price = order["ap"]
+                volume = float(order["q"])
+                avg_price = float(order["ap"])
                 exec_type = order["x"]
                 status = order["X"]
 
-                data = rm.get_data_for_order(tool)
-                print(f"ORDER DATA: {data}")
-
                 # Checking if order is primary
                 if order_type == "TRIGGER_LIMIT":
-                    pos_side = data['pos_side']
-
                     if status == "FILLED":
                         print("ORDER IS FILLED")
-                        rm.update_left_volume(tool, 0)
-                        rm.update_last_status(tool, "FILLED")
 
-                        take_profits = data['take_ps']
-                        stop_loss = data['stop_p']
-                        volume = data['left_volume_to_fill']
+                        rm.update_info_for_position(tool, entry_p=avg_price, left_volume_to_fill=0, last_status="FILLED",
+                                                    current_volume=volume)
+
+                        pos_side, takes, stop = rm.get_info_for_position(tool, ['pos_side', 'take_ps', 'stop_p'])
 
                         # Placing stop-loss
-                        be.place_stop_loss_order(tool, stop_loss, volume, pos_side)
+                        be.place_stop_loss_order(tool, stop, volume, pos_side)
 
                         # Placing take-profits
-                        be.place_take_profit_orders(tool, take_profits, volume, pos_side)
+                        be.place_take_profit_orders(tool, takes, volume, pos_side)
 
-
-
-
-
-
-
-                    elif status == "PARTIALLY_FILLED":
-                        # Should send notification for control from my side, as maybe some mistakes here due to rareness
-                        # of this status
-                        pass
                     elif status == "CANCELED":
-                        rm.remove_order(tool)
+                        rm.remove_position(tool)
+
+                    # elif status == "PARTIALLY_FILLED":
+                    #     Should send notification for control from my side, as maybe some mistakes here due to rareness
+                    #     of this status
+                    #     pass
 
                 elif order_type == "STOP":
-                    pass
+                    rm.remove_position(tool)
 
-                elif order_type == "TAKE_PROFIT":
-                    pass
+                elif order_type == "TAKE_PROFIT_MARKET" and status == "TRIGGERED":
+                    print("TRIGGERED TAKE_PROFIT")
+                    # Cancel previous stop-loss and place new if stop-loss wasn't moved yet
+                    breakeven, = rm.get_info_for_position("OP-USDT", ['breakeven'])
+                    if not breakeven:
+                        print("POSITION NOT IN BREAKEVEN YET")
+                        be.cancel_stop_loss_for_tool(tool)
+
+                        # Decreasing volume for new stop-loss as take-profit already fixed some volume of position
+                        volume_for_stop_loss = rm.get_info_for_position(tool, ['current_volume'])[0] - volume
+
+                        rm.update_info_for_position(tool, current_volume=volume_for_stop_loss)
+
+                        print(f"Volume for breakeven: {volume_for_stop_loss}")
+
+                        # If it was the last take - remove order from run-time book?
+                        if volume_for_stop_loss == 0:
+                            rm.remove_position(tool)
+                            print("REMOVED POSITION FROM BOOK")
+                        else:
+                            # Moving stop-loss to breakeven
+                            pos_side, move_stop_after = rm.get_info_for_position(tool, ['pos_side', 'move_stop_after'])
+
+                            print(f"MOVE STOP AFTER: {move_stop_after}")
+
+                            if move_stop_after == 1:
+                                print(f"PLACING NEW BREAKEVEN for {tool}, pos_side: {pos_side}")
+
+                                entry_p, = rm.get_info_for_position(tool, ['entry_p'])
+
+                                be.place_stop_loss_order(tool, entry_p, volume_for_stop_loss, pos_side)
+                                rm.update_info_for_position(tool, move_stop_after=move_stop_after - 1, breakeven=True)
 
         def on_error(ws, error):
             print(f"Error: {error}")
@@ -107,7 +133,10 @@ class Listener:
 
 print("HELLO")
 
-be.place_open_order("OP-USDT", 1.908, 1.9253, 1.9, [1.9452, 1.9478], 1)
+# Short
+#be.place_open_order("OP-USDT", 1.8307, 1.8, 1.87, [1.8302, 1.83], 1)
+# Long
+be.place_open_order("OP-USDT", 1.8342, 1.9, 1.8, [1.8348, 1.85], 1)
 
 listener = Listener()
 listener.listen_for_events()
