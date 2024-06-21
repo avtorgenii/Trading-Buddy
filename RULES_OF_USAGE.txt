@@ -1,0 +1,4 @@
+Program works fine if:
+1. One tool - one position at a time
+2. Don't move/cancel orders placed from program directly ats exchange site
+3.
