@@ -1,5 +1,4 @@
 import json
-
 from fastapi import FastAPI, Query, HTTPException
 from pydantic import BaseModel
 from typing import Optional

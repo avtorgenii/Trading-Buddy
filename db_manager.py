@@ -1,11 +1,11 @@
-from db_creator import (Account, Trade)
+from db_creator import (Account, Trade, Tool)
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 
 class DBInterface:
-    def __init__(self, account_name, echo=False, ):
+    def __init__(self, account_name, echo=False):
         self.account_name = account_name
 
         engine = create_engine("sqlite:///trading.db", echo=echo)
@@ -16,6 +16,10 @@ class DBInterface:
         Session = sessionmaker(bind=engine)
 
         self.session = Session()
+
+    def __del__(self):
+        self.session.commit() # Just in case...
+        self.session.close()
 
     def _get_account_row(self):
         return self.session.query(Account).filter_by(account_name=self.account_name).first()
@@ -39,6 +43,9 @@ class DBInterface:
 
         self.session.commit()
 
+    def get_all_tools(self):
+        return [tool.tool_name for tool in self.session.query(Tool).all()]
+
     def insert_new_trade(self, **kwargs):
         """
         Insert new trade record into the database. All params are OBLIGATORY
@@ -46,7 +53,6 @@ class DBInterface:
         Parameters:
         - tool (str): Name of the tool.
         - side (str): The side of the trade (e.g., "лонг" or "шорт").
-        - risk_usd (float): The risk amount in USD.
 
         Returns:
         trade_id (int)
@@ -55,9 +61,9 @@ class DBInterface:
 
         self.session.add(trade)
 
-    def update_trade(self, trade_id, **kwargs):
+    def update_trade(self, tool, **kwargs):
         """
-        Update a trade record with the given trade_id using the provided keyword arguments. All parameters are OPTIONAL.
+        Updates LAST row of a given tool with the given trade_id using the provided keyword arguments. All parameters are OPTIONAL.
 
         DO NOT PASS ANY OTHER PARAMS EXCEPT ONES BELOW
 
@@ -80,7 +86,7 @@ class DBInterface:
         Returns:
         None
         """
-        trade = self.session.query(Trade).filter_by(trade_id=trade_id).first()
+        trade = self.session.query(Trade).filter_by(tool=tool).order_by(Trade.trade_id.desc()).first()
 
         if trade is not None:
             for k, v in kwargs.items():
@@ -91,6 +97,6 @@ class DBInterface:
                         print(f"Trade does not have attribute '{k}'")
             self.session.commit()
         else:
-            print(f"Trade with trade_id: {trade_id} does not exist")
+            print(f"Trade for tool: {tool} does not exist")
 
 

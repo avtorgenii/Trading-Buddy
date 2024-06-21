@@ -26,11 +26,11 @@ def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_ma
     required_margin = volume * entry_p / leverage
 
     if available_margin >= required_margin:
-        return {"volume": volume, "margin": round(required_margin, 2)}
+        return volume, round(required_margin, 2)
     else:
         allowed_volume = floor_to_digits(leverage * available_margin / entry_p, quantity_precision)
 
-        return {"volume": allowed_volume, "margin": round(allowed_volume * entry_p / leverage, 2)}
+        return allowed_volume, round(allowed_volume * entry_p / leverage, 2)
 
 
 def calc_take_profits_volumes(volume, quantity_precision, num_take_profits):
@@ -43,21 +43,16 @@ def calc_take_profits_volumes(volume, quantity_precision, num_take_profits):
     :return: List of volumes for take profits, largest volume first.
     """
 
-    # Round function that respects the given precision
     def round_with_precision(value, precision):
         factor = 10 ** precision
         return round(value * factor) / factor
 
-    # Calculate base volume for each take profit
     base_volume = volume / num_take_profits
 
-    # Round the base volume according to the precision
     base_volume = round_with_precision(base_volume, quantity_precision)
 
-    # Initialize the volumes list with the base volume
     take_profits_volumes = [base_volume] * num_take_profits
 
-    # Calculate the remaining volume due to rounding
     remaining_volume = round_with_precision(volume - sum(take_profits_volumes), quantity_precision)
 
     # Adjust the first take profit volume to account for the remaining volume
@@ -68,3 +63,20 @@ def calc_take_profits_volumes(volume, quantity_precision, num_take_profits):
     take_profits_volumes.sort(reverse=True)
 
     return take_profits_volumes
+
+
+def calculate_position_potential_loss_and_profit(entry_p, stop_p, take_ps, volume, quantity_precision):
+    volumes = calc_take_profits_volumes(volume, quantity_precision, len(take_ps))
+
+    pot_loss = abs(entry_p - stop_p) * volume
+
+    sum_of_weighted_prices = 0
+
+    for exit_price, exit_volume in zip(take_ps, volumes):
+        sum_of_weighted_prices += exit_price * exit_volume
+
+    price_of_exit = sum_of_weighted_prices / volume
+
+    pot_profit = abs(entry_p - price_of_exit) * volume
+
+    return floor_to_digits(pot_loss, 2), floor_to_digits(pot_profit, 2)

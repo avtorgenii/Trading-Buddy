@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
+
 from bingX.perpetual.v2 import PerpetualV2
-from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
+from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType, HistoryOrder)
 from bingX.exceptions import ClientError
 
 from db_manager import DBInterface
@@ -12,19 +14,21 @@ ACCOUNT_NAME = "BingX"
 
 client = PerpetualV2(api_key=API_KEY, secret_key=SECRET_KEY)
 
+# Get info for account from db and close connection
 db_interface = DBInterface(ACCOUNT_NAME)
 
 deposit, risk = db_interface.get_account_details()
 
+del db_interface
 
-def _get_account_details():
+
+def get_account_details():
     """
     Returns the account details.
     :return: A tuple containing balance, unrealized profit, and available margin.
     """
     details = client.account.get_details()['balance']
-    return {"deposit": deposit, "unrealized_pnl": float(details['unrealizedProfit']),
-            "available_margin": float(details['availableMargin'])}
+    return deposit, risk, float(details['unrealizedProfit']), float(details['availableMargin'])
 
 
 def _get_tool_precision_info(tool):
@@ -32,30 +36,35 @@ def _get_tool_precision_info(tool):
     return {"quantityPrecision": info['quantityPrecision'], "pricePrecision": info['pricePrecision']}
 
 
-def _get_max_leverage(tool):
+def get_max_leverage(tool):
     info = client.trade.get_leverage(tool)
-    return {"long": info["maxLongLeverage"], "short": info["maxShortLeverage"]}
+    return info["maxLongLeverage"], info["maxShortLeverage"]
 
 
 def _get_current_leverage(tool):
     # Temporary, in future leverage should be fetched from frontend
-    return _get_max_leverage(tool)["long"]
+    return get_max_leverage(tool)[0]
 
 
 def _change_leverage_to_current(tool, pos_side):
     client.trade.change_leverage(tool, pos_side, _get_current_leverage(tool))
 
 
-def _calc_position_volume_and_margin(tool, entry_p, stop_p):
-    available_margin = _get_account_details()["available_margin"]
-    leverage = _get_current_leverage(tool)
+def calc_position_volume_and_margin(tool, entry_p, stop_p, leverage):
+    _, _, _, available_margin = get_account_details()
 
     precision_info = _get_tool_precision_info(tool)
     quantity_precision = precision_info['quantityPrecision']
 
-    res = mh.calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage,
-                                             quantity_precision)
-    return res
+    volume, margin = mh.calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage,
+                                                        quantity_precision)
+    return volume, margin
+
+
+def calculate_position_potential_loss_and_profit(tool, entry_p, stop_p, take_ps, volume):
+    quantity_precision = _get_tool_precision_info(tool)['quantityPrecision']
+
+    return mh.calculate_position_potential_loss_and_profit(entry_p, stop_p, take_ps, volume, quantity_precision)
 
 
 def _switch_margin_mode_to_cross(tool):
@@ -89,14 +98,14 @@ def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_a
 
     _change_leverage_to_current(tool, pos_side)
 
-    volume = _calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
+    volume = calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
 
     if volume != 0:
         try:
             _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume)
 
             # Adding primary order info to runtime order book
-            rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume, "NEW")
+            rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume)
         except ClientError:
             print("CANNOT PLACE ORDER, YOUR VOLUME IS TOO SMALL")
     else:
@@ -113,6 +122,7 @@ def place_stop_loss_order(tool, stop_p, volume, pos_side):
 
     print(f"PLACED SL: price: {stop_p}, volume: {volume}")
 
+
 def cancel_stop_loss_for_tool(tool):
     orders = get_orders_for_tool(tool)
 
@@ -122,7 +132,7 @@ def cancel_stop_loss_for_tool(tool):
 
     resp = client.trade.cancel_order(stop_order_id, tool)
 
-    print(f"STOP ORDER CANCELATION RESPONSE: {resp}")
+    print(f"STOP ORDER CANCELLATION RESPONSE: {resp}")
 
 
 def place_take_profit_orders(tool, take_profits, cum_volume, pos_side):
@@ -155,3 +165,77 @@ def get_orders_for_tool(tool):
             stop = order
 
     return {'takes': tps, 'stop': stop}
+
+
+def get_position_info(tool, start_time, end_time):
+    history_order = HistoryOrder(symbol=tool, startTime=start_time - 100000000,
+                                 endTime=end_time + 100000000)  # Broaden time window in case of some lags
+    orders = client.trade.get_orders_history(history_order)['orders']
+
+    print(orders)
+
+    price_of_entry, volume, price_of_exit, pnl, commission = None, None, None, 0, 0
+
+    exit_prices_and_volumes = []
+
+    for order in orders:
+
+        if order['type'] == "LIMIT" or order['type'] == "TRIGGER_LIMIT":
+            price_of_entry = float(order['avgPrice'])
+
+            volume = float(order['executedQty'])
+
+            commission += float(order['commission'])
+        elif order['type'] == "TAKE_PROFIT":
+            commission += float(order['commission'])
+
+            pnl += float(order['profit'])
+
+            if float(order['executedQty']) > 0:
+                exit_prices_and_volumes.append((float(order['avgPrice']), volume))
+
+        elif order['type'] == "STOP":
+            commission += float(order['commission'])
+
+            pnl += float(order['profit'])
+
+            if float(order['executedQty']) > 0:
+                exit_prices_and_volumes.append((float(order['avgPrice']), volume))
+
+        sum_of_weighted_prices = 0
+
+        for exit_price, exit_volume in exit_prices_and_volumes:
+            if exit_volume > 0:
+                sum_of_weighted_prices += exit_price * exit_volume
+
+        price_of_exit = sum_of_weighted_prices / volume
+
+    return price_of_entry, volume, price_of_exit, pnl, commission
+
+
+"""DEBUG"""
+if __name__ == '__main__':
+    def convert_to_unix(date_string):
+        # Define the date format
+        date_format = "%Y-%m-%d %H:%M:%S"
+
+        # Convert date string to datetime object
+        dt = datetime.strptime(date_string, date_format)
+
+        # Convert datetime object to Unix time in milliseconds
+        unix_time = int(dt.replace(tzinfo=timezone.utc).timestamp() * 1000)
+
+        return unix_time
+
+
+    open_time = "2024-05-23 06:26:45"
+    close_time = "2024-05-23 07:14:23"
+
+    open_time_unix = convert_to_unix(open_time)
+    close_time_unix = convert_to_unix(close_time)
+
+    print(open_time_unix, close_time_unix)
+
+    res = get_position_info("GMT-USDT", open_time_unix, close_time_unix)
+
+    print(res)
