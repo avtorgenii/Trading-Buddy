@@ -1,9 +1,10 @@
 import os.path
-from sqlalchemy import create_engine, Table, Column, String, Integer, LargeBinary, DateTime, Float, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, LargeBinary, DateTime, Float, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 import pandas as pd
 from datetime import datetime, time
 
+from math_helper import floor_to_digits
 
 def excel_to_csv(excel):
     # Load the Excel file
@@ -81,7 +82,7 @@ def csv_to_sql(csv_file, db_session, deposit, risk):
             reason_of_entry=d.get('reason_of_entry'),
             price_of_exit=d.get('price_of_exit'),
             reason_of_exit=d.get('reason_of_exit'),
-            pnl_usdt=d.get('pnl'),
+            pnl_usdt=floor_to_digits(d.get('pnl'), 3),
             commission=d.get('commission'),
             comment=d.get('comment'),
             emotional_state=d.get('emotional_state')

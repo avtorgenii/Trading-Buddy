@@ -52,7 +52,7 @@
                         <a href="#ppos" class="nav-link lead">Pending Positions</a>
                     </li>
                     <li class="nav-item d-none d-lg-block">
-                        <a href="#journal" class="nav-link lead">Trading Journal</a>
+                        <a href="/journal" class="nav-link lead">Trading Journal</a>
                     </li>
                     <li class="nav-item d-lg-block">
                         <a href="#riskModal" class="nav-link lead text-danger" data-bs-toggle="modal">Configure Risk</a>
@@ -136,9 +136,9 @@
                                 <i class="bi bi-currency-bitcoin"></i>
                             </span>
                             <select id="tool" class="form-select">
-                                 {% for tool in tools %}
-                                    <option>{{ tool }}</option>
-                                 {% endfor %}
+                                {% for tool in tools %}
+                                <option>{{ tool }}</option>
+                                {% endfor %}
                             </select>
                         </div>
 
@@ -359,16 +359,10 @@
 
 
 
-
-
-
-
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
-    <script src="/static/script.js"></script>
+    <script src="static/index_script.js"></script>
 </body>
 
 </html>

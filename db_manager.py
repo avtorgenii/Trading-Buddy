@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from db_creator import (Account, Trade, Tool)
 
 from sqlalchemy import create_engine
@@ -46,6 +48,9 @@ class DBInterface:
     def get_all_tools(self):
         return [tool.tool_name for tool in self.session.query(Tool).all()]
 
+    def get_all_trades(self):
+        return self.session.query(Trade).order_by(Trade.trade_id.desc()).all()
+
     def insert_new_trade(self, **kwargs):
         """
         Insert new trade record into the database. All params are OBLIGATORY
@@ -61,9 +66,9 @@ class DBInterface:
 
         self.session.add(trade)
 
-    def update_trade(self, tool, **kwargs):
+    def update_last_trade_of_tool(self, tool, **kwargs):
         """
-        Updates LAST row of a given tool with the given trade_id using the provided keyword arguments. All parameters are OPTIONAL.
+        Updates LAST row of a given tool with the provided keyword arguments. All parameters are OPTIONAL.
 
         DO NOT PASS ANY OTHER PARAMS EXCEPT ONES BELOW
 
@@ -99,4 +104,52 @@ class DBInterface:
         else:
             print(f"Trade for tool: {tool} does not exist")
 
+    def update_trade(self, trade_id, **kwargs):
+        """
+        Updates row with given trade_id using the provided keyword arguments. All parameters are OPTIONAL.
 
+        DO NOT PASS ANY OTHER PARAMS EXCEPT ONES BELOW
+
+        Parameters:
+        - trade_id (int): The ID of the trade to update.
+        - tags (str): Tags associated with the trade.
+        - date_time (datetime): The date and time of the trade.
+        - reason_of_entry (str): The reason for entering the trade.
+        - price_of_entry (float): The entry price of the trade.
+        - volume (float): The volume of the trade.
+        - price_of_exit (float): The exit price of the trade.
+        - reason_of_exit (str): The reason for exiting the trade.
+        - pnl_usdt (float): The profit and loss in USDT.
+        - commission (float): The commission for the trade.
+        - comment (str): Comments on the trade.
+        - emotional_state (str): The emotional state before the trade.
+        - screen (bytes): The screenshot of the trade.
+        - screen_zoomed (bytes): The zoomed screenshot of the trade.
+
+        Returns:
+        None
+        """
+        trade = self.session.query(Trade).filter_by(trade_id=trade_id).first()
+
+        if trade is not None:
+            for k, v in kwargs.items():
+                if v is not None:
+                    if hasattr(trade, k):
+                        casted_value = self._cast_value_to_field_type(trade, k, v)
+                        setattr(trade, k, casted_value)
+                    else:
+                        print(f"Trade does not have attribute '{k}'")
+            self.session.commit()
+        else:
+            print(f"Trade of trade_id: {trade_id} does not exist")
+
+    def _cast_value_to_field_type(self, trade, field, value):
+        field_type = type(getattr(trade, field))
+        if field_type == int:
+            return int(value)
+        elif field_type == float:
+            return float(value)
+        elif field_type == datetime:
+            return datetime.fromisoformat(value)
+        else:
+            return value

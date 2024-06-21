@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -83,6 +83,19 @@ def process_takes(data: TradeData):
             "potential_loss": pot_loss, "potential_profit": pot_profit}
 
 
+class TradeUpdate(BaseModel):
+    trade_id: int
+    field: str
+    value: str
+
+
+@app.put("/update-trade/")
+def update_trade(trade_update: TradeUpdate):
+    update_data = {trade_update.field: trade_update.value}
+    db_interface.update_trade(trade_update.trade_id, **update_data)
+    return {"message": "Trade updated successfully"}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     deposit, risk, unrealized_pnl, available_margin = be.get_account_details()
@@ -96,6 +109,12 @@ async def read_root(request: Request):
                                           "risk": risk,
                                           "unrealized_pnl": unrealized_pnl,
                                           "available_margin": available_margin,
-                                          "tools": tools,
+                                          "tools": tools
                                       }
                                       )
+
+
+@app.get("/journal", response_class=HTMLResponse)
+async def read_journal(request: Request):
+    trades = db_interface.get_all_trades()
+    return templates.TemplateResponse("journal.html", {"request": request, "trades": trades})

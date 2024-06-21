@@ -69,8 +69,8 @@ def add_additional_exchange_side_info_for_trade(tool):
 
     price_of_entry, volume, price_of_exit, pnl, commission = be.get_position_info(tool, start_time, end_time)
 
-    db_interface.update_trade(tool, price_of_entry=price_of_entry, volume=volume, price_of_exit=price_of_exit,
-                              pnl_usdt=pnl, commission=commission)
+    db_interface.update_last_trade_of_tool(tool, price_of_entry=price_of_entry, volume=volume, price_of_exit=price_of_exit,
+                                           pnl_usdt=pnl, commission=commission)
 
 
 def update_info_for_position(tool, **kwargs):
