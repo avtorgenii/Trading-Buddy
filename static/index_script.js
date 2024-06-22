@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ tool: tool, entry_p: entryPrice, stop_p: stopPrice, leverage: leverage, take_ps: takes, stoe: stoe }),
+                body: JSON.stringify({ tool: tool, entry_p: entryPrice, stop_p: stopPrice, leverage: leverage, take_ps: takes, stoe: stoe, volume: 0 }),
             })
                 .then(response => {
                     if (!response.ok) {
@@ -93,11 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tradeInfoDiv = document.getElementById('tradeinfo');
                     tradeInfoDiv.classList.remove('d-none');
 
-                    // Assuming you have <span> tags inside your <p> tags to update values
-                    document.getElementById('volume-info').textContent = `Volume: ${data.volume}`;
-                    document.getElementById('margin-info').textContent = `Margin: ${data.margin}`;
-                    document.getElementById('loss-info').textContent = `Potential Loss: ${data.potential_loss}`;
-                    document.getElementById('profit-info').textContent = `Potential Profit: ${data.potential_profit}`;
+
+                    document.getElementById('volume-value').textContent = data.volume;
+                    document.getElementById('margin-value').textContent = data.margin;
+                    document.getElementById('loss-value').textContent = data.potential_loss;
+                    document.getElementById('profit-value').textContent = data.potential_profit;
                 })
                 .catch(error => {
                     console.error('There was a problem with the fetch operation:', error);
@@ -133,7 +133,6 @@ toggleRemoveButton();
 toggleStopToEntryForm();
 
 
-// Open position button
 document.getElementById('entryp').addEventListener('blur', function () {
     updateEntryFormState();
 });
@@ -265,3 +264,113 @@ function saveRisk() {
 // Save risk button
 document.getElementById('saveRisk').addEventListener('click', saveRisk);
 
+
+// Placing trade
+document.addEventListener('DOMContentLoaded', function () {
+    const opentButton = document.getElementById('opent');
+    const submitManualVolumeButton = document.getElementById('submitManualVolume');
+
+    opentButton.addEventListener('click', function () {
+        const tool = document.getElementById('tool').value;
+        const entryPrice = parseFloat(document.getElementById('entryp').value);
+        const triggerPrice = parseFloat(document.getElementById('triggerp').value);
+        const stopPrice = parseFloat(document.getElementById('stopp').value);
+        const leverage = parseInt(document.getElementById('leverage').value);
+        const stoe = parseInt(document.getElementById('stoe').value);
+        const volume = parseFloat(document.getElementById('volume-value').value)
+
+        // Get all take prices
+        const takeInputs = document.querySelectorAll('#form-container input[id^="takep"]');
+        const takes = Array.from(takeInputs).map(input => parseFloat(input.value));
+
+        const data = {
+            tool: tool,
+            entryPrice: entryPrice,
+            triggerPrice: triggerPrice,
+            stopPrice: stopPrice,
+            leverage: leverage,
+            stoe: stoe,
+            takes: takes,
+            volume: volume
+        };
+
+        fetch('/place-trade/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Please enter volume manually") {
+                    const manualVolumeModal = new bootstrap.Modal(document.getElementById('manualVolumeModal'));
+                    manualVolumeModal.show();
+                } else {
+                    console.log('Trade placed successfully:', data);
+
+                    // Update the information in the HTML
+                    document.getElementById('volume-value').textContent = data.volume;
+                    document.getElementById('margin-value').textContent = data.margin;
+                    document.getElementById('loss-value').textContent = data.potential_loss;
+                    document.getElementById('profit-value').textContent = data.potential_profit;
+                }
+            })
+            .catch(error => {
+                console.error('Error placing trade:', error);
+            });
+    });
+
+    submitManualVolumeButton.addEventListener('click', function () {
+        const manualVolume = parseFloat(document.getElementById('manualVolume').value);
+
+        if (!isNaN(manualVolume)) {
+            const tool = document.getElementById('tool').value;
+            const entryPrice = parseFloat(document.getElementById('entryp').value);
+            const triggerPrice = parseFloat(document.getElementById('triggerp').value);
+            const stopPrice = parseFloat(document.getElementById('stopp').value);
+            const leverage = parseInt(document.getElementById('leverage').value);
+            const stoe = parseInt(document.getElementById('stoe').value);
+            const takeInputs = document.querySelectorAll('#form-container input[id^="takep"]');
+            const takes = Array.from(takeInputs).map(input => parseFloat(input.value));
+
+            const data = {
+                tool: tool,
+                entryPrice: entryPrice,
+                triggerPrice: triggerPrice,
+                stopPrice: stopPrice,
+                leverage: leverage,
+                stoe: stoe,
+                takes: takes,
+                volume: manualVolume
+            };
+
+            fetch('/process-trade-data/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Trade data processed successfully:', data);
+
+                    // Update the information in the HTML
+                    document.getElementById('volume-value').textContent = data.volume;
+                    document.getElementById('margin-value').textContent = data.margin;
+                    document.getElementById('loss-value').textContent = data.potential_loss;
+                    document.getElementById('profit-value').textContent = data.potential_profit;
+
+                    // Close the modal
+                    const manualVolumeModal = bootstrap.Modal.getInstance(document.getElementById('manualVolumeModal'));
+                    manualVolumeModal.hide();
+                })
+                .catch(error => {
+                    console.error('Error processing trade data:', error);
+                });
+        } else {
+            alert('Please enter a valid number for volume.');
+        }
+    });
+});

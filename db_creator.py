@@ -1,10 +1,13 @@
 import os.path
 from sqlalchemy import create_engine, Column, String, Integer, LargeBinary, DateTime, Float, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
+
 import pandas as pd
+
+
 from datetime import datetime, time
 
-from math_helper import floor_to_digits
+from math_helper import floor_to_digits, convert_to_unix
 
 def excel_to_csv(excel):
     # Load the Excel file
@@ -74,13 +77,12 @@ def csv_to_sql(csv_file, db_session, deposit, risk):
         trade = Trade(
             tool=d['tool'],
             side=d['side'],
-            price_of_entry=d['price_of_entry'],
             volume=d['volume'],
             risk_usdt=d['risk_usd'],
             tags=d.get('tags'),
-            date_time=pd.to_datetime(d.get('date_time')),
+            start_time=convert_to_unix(d['date_time']),
+            end_time=None,
             reason_of_entry=d.get('reason_of_entry'),
-            price_of_exit=d.get('price_of_exit'),
             reason_of_exit=d.get('reason_of_exit'),
             pnl_usdt=floor_to_digits(d.get('pnl'), 3),
             commission=d.get('commission'),
@@ -163,11 +165,10 @@ class Trade(Base):
     tool = Column(String, nullable=False)
     side = Column(String, nullable=False)
     tags = Column(String, nullable=True)
-    date_time = Column(DateTime, nullable=True)
+    start_time = Column(Integer, nullable=True)
+    end_time = Column(Integer, nullable=True)
     reason_of_entry = Column(String, nullable=True)
-    price_of_entry = Column(Float, nullable=True)
     volume = Column(Float, nullable=True)
-    price_of_exit = Column(Float, nullable=True)
     reason_of_exit = Column(String, nullable=True)
     risk_usdt = Column(Float, nullable=True)
     pnl_usdt = Column(Float, nullable=True)
@@ -177,19 +178,18 @@ class Trade(Base):
     screen = Column(LargeBinary, nullable=True)
     screen_zoomed = Column(LargeBinary, nullable=True)
 
-    def __init__(self, tool, side, price_of_entry, volume, risk_usdt, tags=None, date_time=None, reason_of_entry=None,
-                 price_of_exit=None, reason_of_exit=None, pnl_usdt=None, commission=None, comment=None,
+    def __init__(self, tool, side, start_time=None, end_time=None, volume=None, risk_usdt=None, tags=None,
+                 reason_of_entry=None, reason_of_exit=None, pnl_usdt=None, commission=None, comment=None,
                  emotional_state=None, screen=None, screen_zoomed=None):
         super().__init__()
         self.tool = tool
         self.side = side
-        self.price_of_entry = price_of_entry
         self.volume = volume
         self.risk_usdt = risk_usdt
         self.tags = tags
-        self.date_time = date_time
+        self.start_time = start_time
+        self.end_time = end_time
         self.reason_of_entry = reason_of_entry
-        self.price_of_exit = price_of_exit
         self.reason_of_exit = reason_of_exit
         self.pnl_usdt = pnl_usdt
         self.commission = commission
@@ -199,10 +199,12 @@ class Trade(Base):
         self.screen_zoomed = screen_zoomed
 
     def __repr__(self):
+        utc_start = datetime.fromtimestamp(self.start_time)
+        utc_end = datetime.fromtimestamp(self.end_time)
         return (
-            f"<Trade(trade_id={self.trade_id}, tool={self.tool}, side={self.side}, price_of_entry={self.price_of_entry},"
-            f"volume={self.volume}, risk_usdt={self.risk_usdt}, tags={self.tags}, date_time={self.date_time}, "
-            f"reason_of_entry={self.reason_of_entry}, price_of_exit={self.price_of_exit}, reason_of_exit={self.reason_of_exit},"
+            f"<Trade(trade_id={self.trade_id}, tool={self.tool}, side={self.side}, start_time={utc_start}, end_time={utc_end}"
+            f"volume={self.volume}, risk_usdt={self.risk_usdt}, tags={self.tags}, "
+            f"reason_of_entry={self.reason_of_entry}, reason_of_exit={self.reason_of_exit},"
             f"pnl_usdt={self.pnl_usdt}, commission={self.commission}, comment={self.comment}, emotional_state={self.emotional_state})>")
 
 
@@ -217,7 +219,7 @@ def create_db(echo=False):
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    csv_to_sql("df.csv", session, 90.34, 3)
+    csv_to_sql("used/df.csv", session, 90.34, 3)
 
     add_screens_to_rows(range(137, 147), session)
 

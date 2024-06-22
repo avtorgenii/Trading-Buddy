@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', function () {
+ document.addEventListener('DOMContentLoaded', function () {
+            // Function to handle the modal and save changes
             const editableCells = document.querySelectorAll('.editable');
             const editModal = new bootstrap.Modal(document.getElementById('editModal'));
             const editValueInput = document.getElementById('editValue');
@@ -43,4 +44,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.error('Error updating trade:', error);
                 });
             });
+
+            // Function to convert Unix time to readable date format
+
         });
+
+ const unixFields = document.querySelectorAll('td[data-unix]');
+            unixFields.forEach(field => {
+                const unixTime = parseInt(field.getAttribute('data-unix'), 10);
+                if (!isNaN(unixTime)) {
+                    const date = new Date(unixTime * 1000);
+                    field.textContent = date.toUTCString().replace(' GMT', '');
+                }
+                else {
+                    field.textContent = "";
+                }
+            });

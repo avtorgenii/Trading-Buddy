@@ -1,4 +1,6 @@
 import math
+import pytz
+from datetime import datetime
 
 
 def floor_to_digits(number, digits):
@@ -26,10 +28,11 @@ def calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_ma
     required_margin = volume * entry_p / leverage
 
     if available_margin >= required_margin:
+        print(f"Required: {required_margin}")
         return volume, round(required_margin, 2)
     else:
         allowed_volume = floor_to_digits(leverage * available_margin / entry_p, quantity_precision)
-
+        print(f"Allowed: {allowed_volume * entry_p / leverage}")
         return allowed_volume, round(allowed_volume * entry_p / leverage, 2)
 
 
@@ -80,3 +83,22 @@ def calculate_position_potential_loss_and_profit(entry_p, stop_p, take_ps, volum
     pot_profit = abs(entry_p - price_of_exit) * volume
 
     return floor_to_digits(pot_loss, 2), floor_to_digits(pot_profit, 2)
+
+
+def convert_to_unix(utc_plus_2_string):
+    # Define the timezone
+    utc_plus_2 = pytz.timezone('Etc/GMT-2')  # Etc/GMT-2 is equivalent to UTC+2
+
+    # Parse the string into a datetime object
+    local_time = datetime.strptime(utc_plus_2_string, '%Y-%m-%d %H:%M:%S')
+
+    # Localize the datetime object to UTC+2
+    local_time = utc_plus_2.localize(local_time)
+
+    # Convert to UTC
+    utc_time = local_time.astimezone(pytz.utc)
+
+    # Convert to Unix timestamp
+    unix_time = int(utc_time.timestamp())
+
+    return unix_time

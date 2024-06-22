@@ -20,7 +20,6 @@ class DBInterface:
         self.session = Session()
 
     def __del__(self):
-        self.session.commit() # Just in case...
         self.session.close()
 
     def _get_account_row(self):

@@ -52,13 +52,12 @@
                             <th>Trade No.</th>
                             <th>Tool</th>
                             <th>Side</th>
-                            <th>Price of Entry</th>
                             <th>Volume</th>
                             <th>Risk</th>
                             <th>Tags</th>
-                            <th>Date Time</th>
+                            <th>Start Time UTC</th>
+                            <th>End Time UTC</th>
                             <th>Reason of Entry</th>
-                            <th>Price of Exit</th>
                             <th>Reason of Exit</th>
                             <th>PnL</th>
                             <th>Commission</th>
@@ -75,20 +74,16 @@
                             </td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="side">{{ trade.side }}
                             </td>
-                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="price_of_entry">{{
-                                trade.price_of_entry }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="volume">{{
                                 trade.volume }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="risk_usdt">{{
                                 trade.risk_usdt }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="tags">{{ trade.tags }}
                             </td>
-                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="date_time">{{
-                                trade.date_time }}</td>
+                            <td data-trade-id="{{ trade.trade_id }}" data-field="start_time" data-unix="{{ trade.start_time }}">{{ trade.start_time }}</td>
+                            <td data-trade-id="{{ trade.trade_id }}" data-field="end_time" data-unix="{{ trade.end_time }}">{{ trade.end_time }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="reason_of_entry">{{
                                 trade.reason_of_entry }}</td>
-                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="price_of_exit">{{
-                                trade.price_of_exit }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="reason_of_exit">{{
                                 trade.reason_of_exit }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="pnl_usdt">{{

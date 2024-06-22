@@ -28,6 +28,7 @@ def get_account_details():
     :return: A tuple containing balance, unrealized profit, and available margin.
     """
     details = client.account.get_details()['balance']
+
     return deposit, risk, float(details['unrealizedProfit']), float(details['availableMargin'])
 
 
@@ -39,15 +40,6 @@ def _get_tool_precision_info(tool):
 def get_max_leverage(tool):
     info = client.trade.get_leverage(tool)
     return info["maxLongLeverage"], info["maxShortLeverage"]
-
-
-def _get_current_leverage(tool):
-    # Temporary, in future leverage should be fetched from frontend
-    return get_max_leverage(tool)[0]
-
-
-def _change_leverage_to_current(tool, pos_side):
-    client.trade.change_leverage(tool, pos_side, _get_current_leverage(tool))
 
 
 def calc_position_volume_and_margin(tool, entry_p, stop_p, leverage):
@@ -73,7 +65,9 @@ def _switch_margin_mode_to_cross(tool):
 
 def _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume):
     order_side = Side.BUY if entry_p > stop_p else Side.SELL
-    order_type = OrderType.TRIGGER_LIMIT
+
+    # If trigger price is not specified, system treats order as limit order
+    order_type = OrderType.TRIGGER_LIMIT if trigger_p != 0 else OrderType.LIMIT
 
     order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
                   price=entry_p, stopPrice=trigger_p)
@@ -82,7 +76,7 @@ def _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume):
     return order_response['order']['orderId']
 
 
-def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_after):
+def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_after, leverage, volume):
     """
     :param tool: Tool to trade
     :param trigger_p: Price level on which to trigger placing limit order
@@ -90,26 +84,32 @@ def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_a
     :param stop_p: Stop-loss level
     :param take_profits: List of take-profits levels
     :param move_stop_after: After which take stop-loss will be moved to entry level
+    :param leverage: Leverage for trade
+    :param volume: Entered via modal from frontend if needed
     :return:
     """
     _switch_margin_mode_to_cross(tool)
 
     pos_side = PositionSide.LONG if entry_p > stop_p else PositionSide.SHORT
 
-    _change_leverage_to_current(tool, pos_side)
+    client.trade.change_leverage(tool, pos_side, leverage)
 
-    volume = calc_position_volume_and_margin(tool, entry_p, stop_p)['volume']
+    try:
+        _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume)
 
-    if volume != 0:
-        try:
-            _place_primary_order(tool, trigger_p, entry_p, stop_p, pos_side, volume)
+        pot_loss, _ = calculate_position_potential_loss_and_profit(tool, entry_p, stop_p, take_profits,
+                                                                   volume)
 
-            # Adding primary order info to runtime order book
-            rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume)
-        except ClientError:
-            print("CANNOT PLACE ORDER, YOUR VOLUME IS TOO SMALL")
-    else:
-        print("CANNOT PLACE ORDER, YOUR VOLUME IS TOO SMALL")
+        # Adding primary order info to runtime order book
+        rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume, pot_loss, leverage)
+
+        return "Primary order placed"
+    except ClientError as e:
+        if e.error_message == "Insufficient margin":
+            return "Please enter volume manually"
+
+        else:
+            return "Volume is too small"
 
 
 def place_stop_loss_order(tool, stop_p, volume, pos_side):
@@ -167,75 +167,51 @@ def get_orders_for_tool(tool):
     return {'takes': tps, 'stop': stop}
 
 
-def get_position_info(tool, start_time, end_time):
-    history_order = HistoryOrder(symbol=tool, startTime=start_time - 100000000,
-                                 endTime=end_time + 100000000)  # Broaden time window in case of some lags
-    orders = client.trade.get_orders_history(history_order)['orders']
+def get_current_positions_info():
+    positions = client.account.get_swap_positions()
 
-    print(orders)
+    dicts = []
 
-    price_of_entry, volume, price_of_exit, pnl, commission = None, None, None, 0, 0
+    for position in positions:
+        d = {
+            'tool': position['symbol'],
+            'pos_side': position['positionSide'],
+            'leverage': position['leverage'],
+            'volume': position['availableAmt'],
+            'margin': position['margin'],
+            'avg_open': position['avgPrice'],
+            'pnl': position['unrealizedProfit'] + position['realizedProfit']
+        }
 
-    exit_prices_and_volumes = []
+        dicts.append(d)
 
-    for order in orders:
+    return dicts
 
-        if order['type'] == "LIMIT" or order['type'] == "TRIGGER_LIMIT":
-            price_of_entry = float(order['avgPrice'])
 
-            volume = float(order['executedQty'])
+def get_pending_positions_info():
+    positions = rm.get_data()
 
-            commission += float(order['commission'])
-        elif order['type'] == "TAKE_PROFIT":
-            commission += float(order['commission'])
+    dicts = []
 
-            pnl += float(order['profit'])
+    for tool in positions:
+        position = positions[tool]
+        d = {
+            'tool': tool,
+            'entry_price': position['entry_p'],
+            'pos_side': position['pos_side'],
+            'leverage': position['leverage'],
+            'volume': position['primary_volume'],
+            'margin': position['entry_p'] * position['primary_volume'] / position['leverage'],
+        }
 
-            if float(order['executedQty']) > 0:
-                exit_prices_and_volumes.append((float(order['avgPrice']), volume))
+        dicts.append(d)
 
-        elif order['type'] == "STOP":
-            commission += float(order['commission'])
-
-            pnl += float(order['profit'])
-
-            if float(order['executedQty']) > 0:
-                exit_prices_and_volumes.append((float(order['avgPrice']), volume))
-
-        sum_of_weighted_prices = 0
-
-        for exit_price, exit_volume in exit_prices_and_volumes:
-            if exit_volume > 0:
-                sum_of_weighted_prices += exit_price * exit_volume
-
-        price_of_exit = sum_of_weighted_prices / volume
-
-    return price_of_entry, volume, price_of_exit, pnl, commission
+    return dicts
 
 
 """DEBUG"""
 if __name__ == '__main__':
-    def convert_to_unix(date_string):
-        # Define the date format
-        date_format = "%Y-%m-%d %H:%M:%S"
-
-        # Convert date string to datetime object
-        dt = datetime.strptime(date_string, date_format)
-
-        # Convert datetime object to Unix time in milliseconds
-        unix_time = int(dt.replace(tzinfo=timezone.utc).timestamp() * 1000)
-
-        return unix_time
-
-
-    open_time = "2024-05-23 06:26:45"
-    close_time = "2024-05-23 07:14:23"
-
-    open_time_unix = convert_to_unix(open_time)
-    close_time_unix = convert_to_unix(close_time)
-
-    print(open_time_unix, close_time_unix)
-
-    res = get_position_info("GMT-USDT", open_time_unix, close_time_unix)
+    place_open_order("OP-USDT", 0, 1.803, 1.7776, [1.8348, 1.85], 1, 50, 1)
+    res = get_pending_positions_info()
 
     print(res)

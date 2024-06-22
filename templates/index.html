@@ -104,7 +104,7 @@
                     </p>
                     <p class="text-muted">
                         <span>Available Margin: </span>
-                        <span id="margin-value">{{ available_margin }}</span>
+                        <span>{{ available_margin }}</span>
                     </p>
                     <p class="text-muted">
                         <span>Unrealized PnL: </span>
@@ -152,11 +152,21 @@
                                 pattern="[0-9.,]*">
                         </div>
 
+                        <!--Trigger Price Selection-->
+                        <label for="triggerp" class="form-label">Trigger Price:</label>
+                        <div class="mb-4 input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </span>
+                            <input type="text" class="form-control" id="triggerp" placeholder="0.05" value="0"
+                                inputmode="decimal" pattern="[0-9.,]*">
+                        </div>
+
                         <!--Stop Price Selection-->
                         <label for="stopp" class="form-label">Stop Price:</label>
                         <div class="mb-4 input-group">
                             <span class="input-group-text">
-                                <i class="bi bi-box-arrow-in-left"></i>
+                                <i class="bi bi-box-arrow-left"></i>
                             </span>
                             <input type="text" class="form-control" id="stopp" placeholder="0.04" inputmode="decimal"
                                 pattern="[0-9.,]*">
@@ -213,10 +223,35 @@
                         <!-- Trade Information -->
                         <div id="tradeinfo" class="form-group d-none">
                             <label class="form-label fs-4">Trade Info:</label>
-                            <p id="volume-info" class="form-text fs-5">Volume: </p>
-                            <p id="margin-info" class="form-text fs-5">Margin: </p>
-                            <p id="loss-info" class="form-text fs-5">Potential Loss: </p>
-                            <p id="profit-info" class="form-text fs-5">Potential Profit: </p>
+                            <p id="volume-info" class="form-text fs-5">Volume: <span id="volume-value"></span></p>
+                            <p id="margin-info" class="form-text fs-5">Margin: <span id="margin-value"></span></p>
+                            <p id="loss-info" class="form-text fs-5">Potential Loss: <span id="loss-value"></span></p>
+                            <p id="profit-info" class="form-text fs-5">Potential Profit: <span id="profit-value"></span>
+                            </p>
+                        </div>
+
+                        <!-- Manual Volume Entry Modal -->
+                        <div class="modal fade" id="manualVolumeModal" tabindex="-1"
+                            aria-labelledby="manualVolumeModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="manualVolumeModalLabel">Enter Volume Manually</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label for="manualVolume" class="form-label">Volume:</label>
+                                        <input type="number" class="form-control" id="manualVolume" step="0.01">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <button id="submitManualVolume" type="button"
+                                            class="btn btn-primary">Submit</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
 
