@@ -21,7 +21,8 @@ File Template:
         pnl: ,
         commission: 
         start_time: # CANNOT BE MODIFIED OUTSIDE
-        leverage: 
+        leverage: ,
+        trigger_p: 
     },
 }
 """
@@ -40,7 +41,7 @@ def put_data(new_positions):
         json.dump(new_positions, f, indent=4)
 
 
-def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume, risk, leverage):
+def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume, risk, leverage, trigger_p):
     orders = get_data()
 
     pos_side = "LONG" if entry_p > stop_p else "SHORT"
@@ -49,7 +50,7 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
                     'pos_side': pos_side,
                     'move_stop_after': move_stop_after, 'current_volume': 0,
                     'left_volume_to_fill': primary_volume, 'primary_volume': primary_volume,
-                    'last_status': "NEW", 'breakeven': False, 'pnl': 0, 'commission': 0, 'leverage': leverage}
+                    'last_status': "NEW", 'breakeven': False, 'pnl': 0, 'commission': 0, 'leverage': leverage, 'trigger_p': trigger_p}
 
     put_data(orders)
 
@@ -143,6 +144,9 @@ def get_info_for_position(tool, desired_params):
         breakeven (bool): Indicates if stop-loss is moved nearby entry level (True) or not (False).
         pnl (float): Total current realized pnl of position
         commission (float): Total current commission of position
+        start_time (float): Start time in unix
+        leverage (int):
+        trigger_p (float):
     }
 
     Example:

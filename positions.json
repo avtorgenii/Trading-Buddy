@@ -1,3 +1,21 @@
 {
-
+    "OP-USDT": {
+        "entry_p": 1.803,
+        "stop_p": 1.7776,
+        "take_ps": [
+            1.8348,
+            1.85
+        ],
+        "pos_side": "LONG",
+        "move_stop_after": 1,
+        "current_volume": 0,
+        "left_volume_to_fill": 1.2,
+        "primary_volume": 1.2,
+        "last_status": "NEW",
+        "breakeven": false,
+        "pnl": 0,
+        "commission": 0,
+        "leverage": 50,
+        "trigger_p": 1.9
+    }
 }

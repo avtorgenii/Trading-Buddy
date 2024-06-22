@@ -130,6 +130,11 @@ def place_trade(pos_data: PositionData):
 async def read_root(request: Request):
     deposit, risk, unrealized_pnl, available_margin = be.get_account_details()
     tools = db_interface.get_all_tools()
+    curr_positions = be.get_current_positions_info()
+    pend_positions = be.get_pending_positions_info()
+
+    print(pend_positions)
+
     return templates.TemplateResponse("index.html",
                                       {
                                           "request": request,
@@ -137,7 +142,9 @@ async def read_root(request: Request):
                                           "risk": risk,
                                           "unrealized_pnl": unrealized_pnl,
                                           "available_margin": available_margin,
-                                          "tools": tools
+                                          "tools": tools,
+                                          "current_positions": curr_positions,
+                                          "pending_positions": pend_positions
                                       }
                                       )
 

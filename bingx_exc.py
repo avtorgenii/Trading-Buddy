@@ -101,7 +101,7 @@ def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_a
                                                                    volume)
 
         # Adding primary order info to runtime order book
-        rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume, pot_loss, leverage)
+        rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume, pot_loss, leverage, trigger_p)
 
         return "Primary order placed"
     except ClientError as e:
@@ -180,7 +180,7 @@ def get_current_positions_info():
             'volume': position['availableAmt'],
             'margin': position['margin'],
             'avg_open': position['avgPrice'],
-            'pnl': position['unrealizedProfit'] + position['realizedProfit']
+            'pnl': mh.floor_to_digits(float(position['unrealizedProfit']) + float(position['realisedProfit']), 4)
         }
 
         dicts.append(d)
@@ -190,6 +190,8 @@ def get_current_positions_info():
 
 def get_pending_positions_info():
     positions = rm.get_data()
+
+    print(positions)
 
     dicts = []
 
@@ -202,6 +204,7 @@ def get_pending_positions_info():
             'leverage': position['leverage'],
             'volume': position['primary_volume'],
             'margin': position['entry_p'] * position['primary_volume'] / position['leverage'],
+            'trigger_price': position['trigger_p']
         }
 
         dicts.append(d)
@@ -211,7 +214,7 @@ def get_pending_positions_info():
 
 """DEBUG"""
 if __name__ == '__main__':
-    place_open_order("OP-USDT", 0, 1.803, 1.7776, [1.8348, 1.85], 1, 50, 1)
+    #place_open_order("OP-USDT", 0, 1.803, 1.7776, [1.8348, 1.85], 1, 50, 1)
     res = get_pending_positions_info()
 
     print(res)
