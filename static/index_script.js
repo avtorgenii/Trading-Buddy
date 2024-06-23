@@ -203,9 +203,12 @@ function updateEntryFormState() {
             button.classList.add('btn-danger');
             button.textContent = 'Open Short';
 
-            leverageInput.disabled = true;
-
             tradeInfo.classList.remove('d-none');
+
+            leverageInput.disabled = false;
+
+            // Fetch and update leverage input
+            fetchMaxLeverage(tool, updateLeverage);
         } else {
             button.classList.remove('btn-success', 'btn-danger', 'disabled');
             button.classList.add('btn-secondary');
@@ -251,8 +254,8 @@ function saveAccountData() {
                 return response.json();
             })
             .then(data => {
-                riskText.textContent = `${risk.toFixed(1)}%`;
-                depositText.textContent = `${deposit.toFixed(1)}`;
+                riskText.textContent = `${risk.toFixed(2)}%`;
+                depositText.textContent = `${deposit.toFixed(2)}`;
 
 
 
@@ -270,6 +273,7 @@ function saveAccountData() {
 document.getElementById('saveAccountData').addEventListener('click', saveAccountData);
 
 
+// Placing order
 document.addEventListener('DOMContentLoaded', function () {
     const opentButton = document.getElementById('opent');
     const submitManualVolumeButton = document.getElementById('submitManualVolume');
@@ -315,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.message === "Please enter volume manually") {
                     const manualVolumeModal = new bootstrap.Modal(document.getElementById('manualVolumeModal'));
                     manualVolumeModal.show();
-                } else if (data.message == "Volume is too small") {
+                } else if (data.message === "Volume is too small") {
                     alert('Volume is too small. Cannot place trade.');
                 } else {
                     // Refereshing page so trade would appear on pending
@@ -342,12 +346,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const data = {
                 tool: tool,
-                entryPrice: entryPrice,
-                triggerPrice: triggerPrice,
-                stopPrice: stopPrice,
+                entry_p: entryPrice,
+                stop_p: stopPrice,
                 leverage: leverage,
                 stoe: stoe,
-                takes: takes,
+                take_ps: takes,
                 volume: manualVolume
             };
 
@@ -392,6 +395,7 @@ document.addEventListener('DOMContentLoaded', function () {
     cancelTradeButtons.forEach(button => {
         button.addEventListener('click', function () {
             const tool = this.getAttribute('data-tool');
+            console.log('Cancelling trade for tool:', tool); // Debugging statement
 
             fetch('/cancel-trade/', {
                 method: 'POST',
@@ -407,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return response.json();
                 })
                 .then(data => {
-                    // Refereshing page so trade will be removed from pending
+                    // Refreshing page so trade would disappear from pending
                     location.reload();
                 })
                 .catch(error => {
@@ -417,6 +421,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
 
 
 

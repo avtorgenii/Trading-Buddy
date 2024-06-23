@@ -1,6 +1,9 @@
 import json
 import time
 
+import requests
+
+from controller import CancelPositionData
 from db_manager import DBInterface
 
 """
@@ -48,16 +51,30 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
 
     orders[tool] = {'entry_p': entry_p, 'stop_p': stop_p, 'take_ps': take_ps,
                     'pos_side': pos_side,
-                    'move_stop_after': move_stop_after, 'current_volume': 0,
+                    'move_stop_after': move_stop_after, 'current_volume': 0.0,
                     'left_volume_to_fill': primary_volume, 'primary_volume': primary_volume,
-                    'last_status': "NEW", 'breakeven': False, 'pnl': 0, 'commission': 0, 'leverage': leverage,
-                    'trigger_p': trigger_p, 'cancel_levels': []}
+                    'last_status': "NEW", 'breakeven': False, 'pnl': 0.0, 'commission': 0.0, 'leverage': leverage,
+                    'trigger_p': trigger_p, 'cancel_levels': [], 'start_time': int(time.time())}
 
     put_data(orders)
 
     # INSERTING NEW ROW INTO DATABASE
     side = "лонг" if entry_p > stop_p else "шорт"
-    db_interface.insert_new_trade(tool=tool, side=side, risk_usdt=risk)
+    db_interface.insert_new_trade(tool=tool.replace("-USDT", ""), side=side, risk_usdt=risk)
+
+
+def stop_price_listener(tool: str):
+    base_url = "http://127.0.0.1:8000"  # Change when deploying on server, or find a way how to get it dynamically like JS does
+    route = "/stop-price-listener/"
+    url = base_url + route
+
+    cancel_data = CancelPositionData(tool=tool)
+    response = requests.post(url, json=cancel_data.model_dump())
+
+    if response.status_code == 200:
+        print("Price listener stopped successfully:", response.json())
+    else:
+        print(f"Error stopping price listener: {response.status_code}, {response.json()}")
 
 
 def close_position(tool):
@@ -70,14 +87,23 @@ def close_position(tool):
                                                                                      ['pnl', 'commission',
                                                                                       'primary_volume', 'start_time',
                                                                                       'last_status'])
+    # If trade was canceled automatically, its status doesn't change from the beginning
+    if last_status == "NEW":
+        primary_volume = None
+        pnl = None
+        commission = None
 
-    db_interface.update_last_trade_of_tool(tool.replace("-USDT", ""), volume=primary_volume, pnl_usdt=pnl, commission=commission,
+    db_interface.update_last_trade_of_tool(tool.replace("-USDT", ""), volume=primary_volume, pnl_usdt=pnl,
+                                           commission=commission,
                                            start_time=start_time,
                                            end_time=int(time.time()))
 
     del orders[tool]
 
     put_data(orders)
+
+    # Deleting price listener
+    stop_price_listener(tool)
 
 
 def cancel_position(tool):
@@ -89,6 +115,9 @@ def cancel_position(tool):
     del orders[tool]
 
     put_data(orders)
+
+    # Deleting price listener
+    stop_price_listener(tool)
 
 
 def update_info_for_position(tool, **kwargs):
@@ -186,5 +215,5 @@ def get_info_for_position(tool, desired_params):
 
         return output
     except KeyError:
-        print(f"Position for {tool} does not exist")
+        #print(f"Position for {tool} does not exist")
         return [None] * len(desired_params)

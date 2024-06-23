@@ -1,3 +1,5 @@
+import threading
+
 from bingX.perpetual.v2 import PerpetualV2
 from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
 from bingX.exceptions import ClientError
@@ -14,6 +16,9 @@ client = PerpetualV2(api_key=API_KEY, secret_key=SECRET_KEY)
 
 # Get info for account from db and close connection
 db_interface = DBInterface(ACCOUNT_NAME)
+
+# Listeners for cancel prices of tools
+listeners_threads = []
 
 
 def get_deposit_and_risk():
@@ -115,7 +120,7 @@ def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_a
 
 
 def place_stop_loss_order(tool, stop_p, volume, pos_side):
-    order_side = Side.SELL if pos_side == PositionSide.LONG else Side.BUY
+    order_side = Side.SELL if pos_side == "LONG" else Side.BUY
     order_type = OrderType.STOP_MARKET
 
     order = Order(symbol=tool, side=order_side, positionSide=pos_side, quantity=volume, type=order_type,
@@ -137,7 +142,7 @@ def cancel_stop_loss_for_tool(tool):
     print(f"STOP ORDER CANCELLATION RESPONSE: {resp}")
 
 
-def cancel_primary_order_for_tool(tool):
+def cancel_primary_order_for_tool(tool, cancel_by_overlow=False):
     orders = get_orders_for_tool(tool)
 
     print(orders)
@@ -146,13 +151,17 @@ def cancel_primary_order_for_tool(tool):
 
     resp = client.trade.cancel_order(entry_order_id, tool)
 
-    rm.cancel_position(tool)
+    # Don't save position to db only if it was cancelled by overlow
+    if cancel_by_overlow:
+        rm.cancel_position(tool)
+    else:
+        rm.close_position(tool)
 
     print(f"PRIMARY ORDER CANCELLATION RESPONSE: {resp}")
 
 
 def place_take_profit_orders(tool, take_profits, cum_volume, pos_side):
-    order_side = Side.SELL if pos_side == PositionSide.LONG else Side.BUY
+    order_side = Side.SELL if pos_side == "LONG" else Side.BUY
     order_type = OrderType.TAKE_PROFIT_MARKET
 
     quantity_precision = _get_tool_precision_info(tool)['quantityPrecision']
@@ -197,7 +206,7 @@ def get_current_positions_info():
             'pos_side': position['positionSide'],
             'leverage': position['leverage'],
             'volume': position['availableAmt'],
-            'margin': position['margin'],
+            'margin': round(float(position['margin']), 3),
             'avg_open': position['avgPrice'],
             'pnl': mh.floor_to_digits(float(position['unrealizedProfit']) + float(position['realisedProfit']), 4)
         }
@@ -216,17 +225,18 @@ def get_pending_positions_info():
 
     for tool in positions:
         position = positions[tool]
-        d = {
-            'tool': tool,
-            'entry_price': position['entry_p'],
-            'pos_side': position['pos_side'],
-            'leverage': position['leverage'],
-            'volume': position['primary_volume'],
-            'margin': position['entry_p'] * position['primary_volume'] / position['leverage'],
-            'trigger_price': position['trigger_p']
-        }
+        if position['last_status'] == "NEW":
+            d = {
+                'tool': tool,
+                'entry_price': position['entry_p'],
+                'pos_side': position['pos_side'],
+                'leverage': position['leverage'],
+                'volume': position['primary_volume'],
+                'margin': position['entry_p'] * position['primary_volume'] / position['leverage'],
+                'trigger_price': position['trigger_p']
+            }
 
-        dicts.append(d)
+            dicts.append(d)
 
     return dicts
 

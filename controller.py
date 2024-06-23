@@ -2,7 +2,7 @@ import threading
 from typing import List
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from db_manager import DBInterface
 import runtime_manager as rm
 import bingx_exc as be
-from listener import OrderListener
+from listener import OrderListener, PriceListener
 
 app = FastAPI()
 
@@ -23,8 +23,40 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 db_interface = DBInterface("BingX")
 
+# Dictionary for storing price listeners
+listeners_threads = {}
 
-# Define the RiskUpdate model
+
+def create_price_listener_for_tool(tool):
+    p_listener = PriceListener(tool)
+
+    price_listener_thread = threading.Thread(target=p_listener.listen_for_events)
+    price_listener_thread.start()
+
+    listeners_threads[tool] = [price_listener_thread, p_listener]
+
+
+def delete_price_listener_for_tool(tool):
+    try:
+        thread, listener = listeners_threads[tool]
+        listener.stop_listening()
+        thread.join()
+
+        del listeners_threads[tool]
+    except Exception as e:
+        print("Price listener already deleted")
+
+
+class CancelPositionData(BaseModel):
+    tool: str
+
+
+# Removing price listener
+@app.post("/stop-price-listener/")
+def stop_price_listener(cancel_data: CancelPositionData):
+    delete_price_listener_for_tool(cancel_data.tool)
+
+
 class AccountUpdateData(BaseModel):
     risk: float
     deposit: float
@@ -47,7 +79,7 @@ class ToolRequestData(BaseModel):
 def set_default_leverage(request: ToolRequestData):
     max_leverage_long, max_leverage_short = be.get_max_leverage(request.tool + "-USDT")
     max_leverage = max_leverage_long if request.long_side else max_leverage_short
-    print(max_leverage)
+    #print(max_leverage)
     return {"max_leverage": max_leverage}
 
 
@@ -71,7 +103,7 @@ def process_takes(data: TradeData):
     stoe = data.stoe
     volume = data.volume
 
-    print("Received data:", data.model_dump())
+    #print("Received data:", data.model_dump())
 
     if volume == 0.0:
         volume, margin = be.calc_position_volume_and_margin(tool, entry_p, stop_p, leverage)
@@ -83,7 +115,7 @@ def process_takes(data: TradeData):
     d = {"message": "Data processed successfully", "volume": volume, "margin": margin,
          "potential_loss": pot_loss, "potential_profit": pot_profit}
 
-    print(d)
+    #print(d)
 
     return {"message": "Data processed successfully", "volume": volume, "margin": margin,
             "potential_loss": pot_loss, "potential_profit": pot_profit}
@@ -124,15 +156,15 @@ def place_trade(pos_data: PositionData):
     volume = pos_data.volume
     stoe = pos_data.stoe
 
-    print("Received data for trade placing:", pos_data.model_dump())
+    #print("Received data for trade placing:", pos_data.model_dump())
 
     res = be.place_open_order(tool, trigger_price, entry_price, stop_price, takes, stoe, leverage, volume)
 
+    # Creating price listener for cancel tracking if order was placed
+    if res == "Primary order placed":
+        create_price_listener_for_tool(tool)
+
     return {"message": res}
-
-
-class CancelPositionData(BaseModel):
-    tool: str
 
 
 @app.post("/cancel-trade/")
