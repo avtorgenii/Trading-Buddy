@@ -226,21 +226,23 @@ function updateEntryFormState() {
 // Initial call to set the correct state of the button
 updateEntryFormState();
 
-
-function saveRisk() {
+// Account Config
+function saveAccountData() {
     const riskText = document.getElementById('risk-value');
     const risk = parseFloat(document.getElementById('newRisk').value);
 
-    console.log(`New risk value: ${risk}`); // Debugging statement
+    const depositText = document.getElementById('deposit-value');
+    const deposit = parseFloat(document.getElementById('newDeposit').value);
 
-    if (!isNaN(risk)) {
-        // Send the request to FastAPI to update the risk value in the database
-        fetch('/update-risk/', {
+
+    if (!isNaN(risk) && !isNaN(deposit)) {
+        // Send the request to FastAPI to update the account data in the database
+        fetch('/update-account-data/', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ risk: risk }),
+            body: JSON.stringify({ risk: risk, deposit: deposit }),
         })
             .then(response => {
                 if (!response.ok) {
@@ -249,23 +251,25 @@ function saveRisk() {
                 return response.json();
             })
             .then(data => {
-                const updatedRisk = parseFloat(data.risk).toFixed(1);
-                riskText.textContent = `${updatedRisk}%`;
+                riskText.textContent = `${risk.toFixed(1)}%`;
+                depositText.textContent = `${deposit.toFixed(1)}`;
+
+
+
             })
             .catch(error => {
 
             });
 
     } else {
-        alert('Please enter a valid number for risk.');
+        alert('Please enter a valid number for both params.');
     }
 }
 
-// Save risk button
-document.getElementById('saveRisk').addEventListener('click', saveRisk);
+// Save account data button
+document.getElementById('saveAccountData').addEventListener('click', saveAccountData);
 
 
-// Placing trade
 document.addEventListener('DOMContentLoaded', function () {
     const opentButton = document.getElementById('opent');
     const submitManualVolumeButton = document.getElementById('submitManualVolume');
@@ -277,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const stopPrice = parseFloat(document.getElementById('stopp').value);
         const leverage = parseInt(document.getElementById('leverage').value);
         const stoe = parseInt(document.getElementById('stoe').value);
-        const volume = parseFloat(document.getElementById('volume-value').value)
+        const volume = parseFloat(document.getElementById('volume-value').textContent);  // Changed from value to textContent
 
         // Get all take prices
         const takeInputs = document.querySelectorAll('#form-container input[id^="takep"]');
@@ -301,23 +305,25 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             body: JSON.stringify(data),
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.message === "Please enter volume manually") {
                     const manualVolumeModal = new bootstrap.Modal(document.getElementById('manualVolumeModal'));
                     manualVolumeModal.show();
+                } else if (data.message == "Volume is too small") {
+                    alert('Volume is too small. Cannot place trade.');
                 } else {
-                    console.log('Trade placed successfully:', data);
-
-                    // Update the information in the HTML
-                    document.getElementById('volume-value').textContent = data.volume;
-                    document.getElementById('margin-value').textContent = data.margin;
-                    document.getElementById('loss-value').textContent = data.potential_loss;
-                    document.getElementById('profit-value').textContent = data.potential_profit;
+                    // Refereshing page so trade would appear on pending
+                    location.reload();
                 }
             })
             .catch(error => {
-                console.error('Error placing trade:', error);
+                alert('Error placing trade', error);
             });
     });
 
@@ -372,5 +378,96 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             alert('Please enter a valid number for volume.');
         }
+    });
+});
+
+
+
+
+
+// Cancelling trade
+document.addEventListener('DOMContentLoaded', function () {
+    const cancelTradeButtons = document.querySelectorAll('.cancel-trade-btn');
+
+    cancelTradeButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const tool = this.getAttribute('data-tool');
+
+            fetch('/cancel-trade/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tool: tool }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Refereshing page so trade will be removed from pending
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error cancelling trade:', error);
+                    alert('Error cancelling trade');
+                });
+        });
+    });
+});
+
+
+
+// Cancel levels
+document.addEventListener('DOMContentLoaded', function () {
+    const cancelButtons = document.querySelectorAll('.cancel-levels-btn');
+    const cancelLevelsModal = new bootstrap.Modal(document.getElementById('cancelLevelsModal'));
+
+    cancelButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const tool = this.getAttribute('data-tool');
+            const posSide = this.getAttribute('data-pos-side');
+            const overLabel = document.querySelector('label[for="over"]');
+
+            if (posSide === 'LONG') {
+                overLabel.textContent = 'Overlow:';
+            } else {
+                overLabel.textContent = 'Overhigh:';
+            }
+
+            document.getElementById('cancelationTool').value = tool;
+
+            // Show the modal
+            cancelLevelsModal.show();
+        });
+    });
+
+    document.getElementById('saveCancelLevels').addEventListener('click', function () {
+        const form = document.getElementById('cancelLevelsForm');
+        const formData = new FormData(form);
+
+        // Explicitly add the tool information
+        formData.set('tool', document.getElementById('cancelationTool').value);
+
+        const data = Object.fromEntries(formData.entries());
+
+
+        fetch('/update-cancel-levels/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Cancel levels updated successfully:', data);
+                cancelLevelsModal.hide();
+            })
+            .catch(error => {
+                console.error('Error updating cancel levels:', error);
+            });
     });
 });

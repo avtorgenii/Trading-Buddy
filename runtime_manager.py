@@ -3,7 +3,6 @@ import time
 
 from db_manager import DBInterface
 
-
 """
 File Template:
 {
@@ -22,7 +21,8 @@ File Template:
         commission: 
         start_time: # CANNOT BE MODIFIED OUTSIDE
         leverage: ,
-        trigger_p: 
+        trigger_p: ,
+        cancel_levels: [] # First is for overhigh/overlow, second is for take-profit level
     },
 }
 """
@@ -50,7 +50,8 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
                     'pos_side': pos_side,
                     'move_stop_after': move_stop_after, 'current_volume': 0,
                     'left_volume_to_fill': primary_volume, 'primary_volume': primary_volume,
-                    'last_status': "NEW", 'breakeven': False, 'pnl': 0, 'commission': 0, 'leverage': leverage, 'trigger_p': trigger_p}
+                    'last_status': "NEW", 'breakeven': False, 'pnl': 0, 'commission': 0, 'leverage': leverage,
+                    'trigger_p': trigger_p, 'cancel_levels': []}
 
     put_data(orders)
 
@@ -60,14 +61,30 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
 
 
 def close_position(tool):
+    """
+    For positions closing and automatic cancelation of orders when reached take-profit level, their data is being saved into database
+    """
     orders = get_data()
 
-    pnl, commission, primary_volume, start_time = get_info_for_position(tool,
-                                                    ['pnl', 'commission', 'primary_volume', 'start_time'])
+    pnl, commission, primary_volume, start_time, last_status = get_info_for_position(tool,
+                                                                                     ['pnl', 'commission',
+                                                                                      'primary_volume', 'start_time',
+                                                                                      'last_status'])
 
-    db_interface.update_last_trade_of_tool(tool, volume=primary_volume, pnl_usdt=pnl, commission=commission,
+    db_interface.update_last_trade_of_tool(tool.replace("-USDT", ""), volume=primary_volume, pnl_usdt=pnl, commission=commission,
                                            start_time=start_time,
                                            end_time=int(time.time()))
+
+    del orders[tool]
+
+    put_data(orders)
+
+
+def cancel_position(tool):
+    """
+    For manual cancelation of position, or cancelation via overhigh/overlow
+    """
+    orders = get_data()
 
     del orders[tool]
 
@@ -98,6 +115,7 @@ def update_info_for_position(tool, **kwargs):
         breakeven (bool): Indicates if stop-loss is moved nearby entry level (True) or not (False).
         pnl (float): Total current realized pnl of position
         commission (float): Total current commission of position
+        cancel_levels (List[float]): Overhigh/overlow and take-profit value for cancelation of order
     }
 
     Example:

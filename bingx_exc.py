@@ -1,7 +1,5 @@
-from datetime import datetime, timezone
-
 from bingX.perpetual.v2 import PerpetualV2
-from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType, HistoryOrder)
+from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
 from bingX.exceptions import ClientError
 
 from db_manager import DBInterface
@@ -17,9 +15,9 @@ client = PerpetualV2(api_key=API_KEY, secret_key=SECRET_KEY)
 # Get info for account from db and close connection
 db_interface = DBInterface(ACCOUNT_NAME)
 
-deposit, risk = db_interface.get_account_details()
 
-del db_interface
+def get_deposit_and_risk():
+    return db_interface.get_account_details()
 
 
 def get_account_details():
@@ -28,6 +26,8 @@ def get_account_details():
     :return: A tuple containing balance, unrealized profit, and available margin.
     """
     details = client.account.get_details()['balance']
+
+    deposit, risk = get_deposit_and_risk()
 
     return deposit, risk, float(details['unrealizedProfit']), float(details['availableMargin'])
 
@@ -47,6 +47,8 @@ def calc_position_volume_and_margin(tool, entry_p, stop_p, leverage):
 
     precision_info = _get_tool_precision_info(tool)
     quantity_precision = precision_info['quantityPrecision']
+
+    deposit, risk = get_deposit_and_risk()
 
     volume, margin = mh.calc_position_volume_and_margin(deposit, risk, entry_p, stop_p, available_margin, leverage,
                                                         quantity_precision)
@@ -135,6 +137,20 @@ def cancel_stop_loss_for_tool(tool):
     print(f"STOP ORDER CANCELLATION RESPONSE: {resp}")
 
 
+def cancel_primary_order_for_tool(tool):
+    orders = get_orders_for_tool(tool)
+
+    print(orders)
+
+    entry_order_id = orders['entry']['orderId']
+
+    resp = client.trade.cancel_order(entry_order_id, tool)
+
+    rm.cancel_position(tool)
+
+    print(f"PRIMARY ORDER CANCELLATION RESPONSE: {resp}")
+
+
 def place_take_profit_orders(tool, take_profits, cum_volume, pos_side):
     order_side = Side.SELL if pos_side == PositionSide.LONG else Side.BUY
     order_type = OrderType.TAKE_PROFIT_MARKET
@@ -157,14 +173,17 @@ def get_orders_for_tool(tool):
 
     tps = []
     stop = None
+    entry = None
 
     for order in orders:
         if order['type'] == "TAKE_PROFIT_MARKET":
             tps.append(order)
         elif order['type'] == "STOP_MARKET":
             stop = order
+        elif order['type'] == "TRIGGER_LIMIT" or order['type'] == "LIMIT":
+            entry = order
 
-    return {'takes': tps, 'stop': stop}
+    return {'entry': entry, 'takes': tps, 'stop': stop}
 
 
 def get_current_positions_info():

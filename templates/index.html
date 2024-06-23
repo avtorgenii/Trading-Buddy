@@ -55,7 +55,8 @@
                         <a href="/journal" class="nav-link lead">Trading Journal</a>
                     </li>
                     <li class="nav-item d-lg-block">
-                        <a href="#riskModal" class="nav-link lead text-danger" data-bs-toggle="modal">Configure Risk</a>
+                        <a href="#riskModal" class="nav-link lead text-danger" data-bs-toggle="modal">Configure
+                            Account</a>
                     </li>
                 </ul>
             </div>
@@ -63,29 +64,37 @@
         </div>
     </nav>
 
-    <!-- Risk Configure Modal -->
+    <!-- Account Configure Modal -->
     <div class="modal fade" id="riskModal" tabindex="-1" aria-labelledby="riskModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="riskModalLabel">Configure Risk</h5>
+                    <h5 class="modal-title" id="riskModalLabel">Configure Account Data</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Risk Configuration Form -->
+                    <!-- Account Configuration Form -->
                     <form>
+                        <div class="mb-3">
+                            <label for="newDeposit" class="form-label">Deposit:</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="newDeposit" inputmode="decimal"
+                                    value="{{ deposit }}" pattern="[0-9],.*">
+                                <span class="input-group-text"><i class="bi bi-percent"></i></span>
+                            </div>
+                        </div>
                         <div class="mb-3">
                             <label for="newRisk" class="form-label">Risk:</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="newRisk" value="3" inputmode="decimal"
-                                    pattern="[0-9],.*">
+                                <input type="number" class="form-control" id="newRisk" inputmode="decimal"
+                                    value="{{ risk }}" pattern="[0-9],.*">
                                 <span class="input-group-text"><i class="bi bi-percent"></i></span>
                             </div>
                         </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button id="saveRisk" type="button" class="btn btn-primary" data-bs-dismiss="modal">Save
+                    <button id="saveAccountData" type="button" class="btn btn-primary" data-bs-dismiss="modal">Save
                         changes</button>
                 </div>
             </div>
@@ -313,6 +322,15 @@
                                 <button class="btn btn-outline-secondary w-100 mb-2">Add Emotional State</button>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100 mb-2 cancel-levels-btn"
+                                    data-tool="{{ position.tool }}" data-pos-side="{{ position.pos_side }}">Add Cancel
+                                    Levels</button>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-12">
                                 <button class="btn btn-primary w-100">ORDERS</button>
@@ -326,7 +344,7 @@
     </section>
 
     <!--Pending Positions-->
-   <section id="ppos">
+    <section id="ppos">
         <div class="container-lg pt-5">
             <h3 class="text-center display-5">Pending Positions</h3>
             <div class="p-3">
@@ -372,6 +390,21 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
+                                <button class="btn btn-danger w-100 mb-2 cancel-trade-btn"
+                                    data-tool="{{ position.tool }}">Cancel Trade</button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100 mb-2 cancel-levels-btn"
+                                    data-tool="{{ position.tool }}" data-pos-side="{{ position.pos_side }}">Add Cancel
+                                    Levels</button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
                                 <button class="btn btn-primary w-100">ORDERS</button>
                             </div>
                         </div>
@@ -383,6 +416,36 @@
     </section>
 
 
+    <!-- Modal for Cancel Levels -->
+    <div class="modal fade" id="cancelLevelsModal" tabindex="-1" aria-labelledby="cancelLevelsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelLevelsModalLabel">Add Cancel Levels</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="cancelLevelsForm">
+                        <div class="mb-3">
+                            <label for="over" class="form-label">Overhigh or Overlow:</label>
+                            <input type="number" class="form-control" id="over" name="over" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="take" class="form-label">Take-profit:</label>
+                            <input type="number" class="form-control" id="take" name="take"
+                                value="{{ some_default_value }}" required>
+                        </div>
+                        <input type="hidden" id="cancelationTool" name="tool">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveCancelLevels">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 

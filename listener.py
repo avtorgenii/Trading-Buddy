@@ -1,4 +1,6 @@
 import json
+import time
+
 import websocket
 import gzip
 import io
@@ -9,7 +11,7 @@ import runtime_manager as rm
 import bingx_exc as be
 
 
-class BingX_Listener:
+class OrderListener:
     def extend_listen_key_validity(self):
         self.other.extend_listen_key_validity_period(self.listen_key)
 
@@ -61,7 +63,8 @@ class BingX_Listener:
 
         rm.update_info_for_position(tool, entry_p=avg_price, left_volume_to_fill=left_volume_to_fill - volume,
                                     last_status="FILLED",
-                                    current_volume=volume, commission=commission + new_commission)
+                                    current_volume=volume, commission=commission + new_commission,
+                                    start_time=int(time.time()))
 
         pos_side, takes, stop = rm.get_info_for_position(tool, ['pos_side', 'take_ps', 'stop_p'])
 
@@ -145,6 +148,7 @@ class BingX_Listener:
                         self.on_fill_primary_order(tool, avg_price, volume, commission)
 
                     elif status == "CANCELED":
+                        # Position cancelation will work from exchange site too
                         self.on_cancel_primary_order(tool)
 
                     elif status == "PARTIALLY_FILLED":
@@ -181,5 +185,5 @@ if __name__ == "__main__":
     # Long
     # res = be.place_open_order("OP-USDT", 0, 1.803, 1.7776, [1.8348, 1.85], 1, 50, manual_volume=1)
     # print(res)
-    listener = BingX_Listener()
+    listener = OrderListener()
     listener.listen_for_events()

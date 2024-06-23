@@ -1,21 +1,24 @@
 {
-    "OP-USDT": {
-        "entry_p": 1.803,
-        "stop_p": 1.7776,
+    "FTM-USDT": {
+        "entry_p": 0.6,
+        "stop_p": 0.5,
         "take_ps": [
-            1.8348,
-            1.85
+            0.7
         ],
         "pos_side": "LONG",
         "move_stop_after": 1,
         "current_volume": 0,
-        "left_volume_to_fill": 1.2,
-        "primary_volume": 1.2,
+        "left_volume_to_fill": 7.0,
+        "primary_volume": 7.0,
         "last_status": "NEW",
         "breakeven": false,
         "pnl": 0,
         "commission": 0,
-        "leverage": 50,
-        "trigger_p": 1.9
+        "leverage": 75,
+        "trigger_p": 0.6,
+        "cancel_levels": [
+            0.1,
+            0.7
+        ]
     }
 }
