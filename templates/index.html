@@ -277,7 +277,7 @@
         </div>
     </section>
 
-    <!--Current Positions-->
+    <!-- Current Positions Section -->
     <section id="cpos">
         <div class="container-lg mt-5 pt-1 pt-lg-5">
             <h3 class="text-center display-5">Current Positions</h3>
@@ -316,24 +316,24 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-12">
-                                <button class="btn btn-outline-primary w-100 mb-2">Add Comment</button>
+                                <button class="btn btn-outline-primary w-100 mb-2 add-comment-btn"
+                                    data-tool="{{ position.tool }}" data-bs-toggle="modal"
+                                    data-bs-target="#commentModal">Add Comment</button>
                             </div>
                             <div class="col-12">
-                                <button class="btn btn-outline-secondary w-100 mb-2">Add Emotional State</button>
+                                <button class="btn btn-outline-secondary w-100 mb-2 add-emotion-btn"
+                                    data-tool="{{ position.tool }}" data-bs-toggle="modal"
+                                    data-bs-target="#emotionModal">Add Emotional State</button>
                             </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-12">
                                 <button class="btn btn-primary w-100 mb-2 cancel-levels-btn"
                                     data-tool="{{ position.tool }}" data-pos-side="{{ position.pos_side }}">Add Cancel
                                     Levels</button>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-12">
-                                <button class="btn btn-primary w-100">ORDERS</button>
+                                <button class="btn btn-outline-primary w-100 mb-2">ORDERS</button>
                             </div>
                         </div>
                     </div>
@@ -343,7 +343,7 @@
         </div>
     </section>
 
-    <!--Pending Positions-->
+    <!-- Pending Positions Section -->
     <section id="ppos">
         <div class="container-lg pt-5">
             <h3 class="text-center display-5">Pending Positions</h3>
@@ -382,30 +382,28 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-12">
-                                <button class="btn btn-outline-primary w-100 mb-2">Add Comment</button>
+                                <button class="btn btn-outline-primary w-100 mb-2 add-comment-btn"
+                                    data-tool="{{ position.tool }}" data-bs-toggle="modal"
+                                    data-bs-target="#commentModal">Add Comment</button>
                             </div>
                             <div class="col-12">
-                                <button class="btn btn-outline-secondary w-100 mb-2">Add Emotional State</button>
+                                <button class="btn btn-outline-secondary w-100 mb-2 add-emotion-btn"
+                                    data-tool="{{ position.tool }}" data-bs-toggle="modal"
+                                    data-bs-target="#emotionModal">Add Emotional State</button>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
-                                <button class="btn btn-danger w-100 mb-2 cancel-trade-btn"
-                                    data-tool="{{ position.tool }}">Cancel Trade</button>
-                            </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-12">
                                 <button class="btn btn-primary w-100 mb-2 cancel-levels-btn"
                                     data-tool="{{ position.tool }}" data-pos-side="{{ position.pos_side }}">Add Cancel
                                     Levels</button>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-12">
-                                <button class="btn btn-primary w-100">ORDERS</button>
+                                <button class="btn btn-outline-primary w-100 mb-2">ORDERS</button>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-danger w-100 mb-2 cancel-trade-btn"
+                                    data-tool="{{ position.tool }}">Cancel Trade</button>
                             </div>
                         </div>
                     </div>
@@ -414,6 +412,57 @@
             </div>
         </div>
     </section>
+
+    <!-- Comment Modal -->
+    <div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentModalLabel">Add Comment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="commentForm">
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Comment</label>
+                            <textarea class="form-control" id="comment" rows="3"></textarea>
+                        </div>
+                        <input type="hidden" id="commentTool">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveComment">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emotion Modal -->
+    <div class="modal fade" id="emotionModal" tabindex="-1" aria-labelledby="emotionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="emotionModalLabel">Add Emotional State</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="emotionForm">
+                        <div class="mb-3">
+                            <label for="emotionalState" class="form-label">Emotional State</label>
+                            <textarea class="form-control" id="emotionalState" rows="3"></textarea>
+                        </div>
+                        <input type="hidden" id="emotionTool">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveEmotion">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- Modal for Cancel Levels -->

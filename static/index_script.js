@@ -475,4 +475,99 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error updating cancel levels:', error);
             });
     });
+
+
+
+
+
+
+
+    console.log('DOM fully loaded and parsed');
+
+    // Add Comment Button Click Event
+    document.querySelectorAll('.add-comment-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            console.log('Add Comment button clicked');
+            const tool = this.getAttribute('data-tool');
+            console.log('Tool:', tool);
+            document.getElementById('commentTool').value = tool;
+        });
+        // Save Comment Button Click Event
+        document.getElementById('saveComment').addEventListener('click', function () {
+            console.log('Save Comment button clicked');
+            const tool = document.getElementById('commentTool').value;
+            const comment = document.getElementById('comment').value;
+            console.log('Tool:', tool, 'Comment:', comment);
+
+            fetch('/update-comment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tool: tool, comment: comment }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Comment updated successfully:', data);
+                    // Hide the modal
+                    const commentModal = new bootstrap.Modal(document.getElementById('commentModal'));
+                    commentModal.hide();
+                })
+                .catch(error => {
+                    console.error('Error updating comment:', error);
+                });
+        });
+
+        // Add Emotion Button Click Event
+        document.querySelectorAll('.add-emotion-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                console.log('Add Emotion button clicked');
+                const tool = this.getAttribute('data-tool');
+                console.log('Tool:', tool);
+                document.getElementById('emotionTool').value = tool;
+            });
+        });
+
+        // Save Emotion Button Click Event
+        document.getElementById('saveEmotion').addEventListener('click', function () {
+            console.log('Save Emotion button clicked');
+            const tool = document.getElementById('emotionTool').value;
+            const emotionalState = document.getElementById('emotionalState').value;
+            console.log('Tool:', tool, 'Emotional State:', emotionalState);
+
+            fetch('/update-emotional-state/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tool: tool, emotional_state: emotionalState }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Emotional state updated successfully:', data);
+                    // Hide the modal
+                    const emotionModal = new bootstrap.Modal(document.getElementById('emotionModal'));
+                    emotionModal.hide();
+                })
+                .catch(error => {
+                    console.error('Error updating emotional state:', error);
+                });
+        });
+    });
+});
+
+
+// Comment and Emotional State
+document.addEventListener('DOMContentLoaded', function () {
+
 });

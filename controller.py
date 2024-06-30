@@ -193,6 +193,32 @@ def update_cancel_levels(cancel_levels: CancelPositionLevels):
     return {"message": "Cancel levels setup successfully"}
 
 
+class CommentUpdateData(BaseModel):
+    tool: str
+    comment: str
+
+
+@app.post("/update-comment/")
+def update_comment(comment_info: CommentUpdateData):
+    tool = comment_info.tool.replace("-USDT", "")
+    comment = comment_info.comment
+
+    db_interface.update_last_trade_of_tool(tool, comment=comment)
+
+
+class EmotionalStateUpdateData(BaseModel):
+    tool: str
+    state: str
+
+
+@app.post("/update-emotional-state/")
+def update_comment(emotional_state_info: EmotionalStateUpdateData):
+    tool = emotional_state_info.tool.replace("-USDT", "")
+    emotional_state = emotional_state_info.state
+
+    db_interface.update_last_trade_of_tool(tool, emotional_state=emotional_state)
+
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     deposit, risk, unrealized_pnl, available_margin = be.get_account_details()

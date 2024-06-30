@@ -165,34 +165,34 @@ class OrderListener(Listener):
         rm.close_position(tool)
 
     def on_take_profit(self, tool, volume, new_pnl, new_commission, status):
-        if status == "PARTIALLY_FILLED" or status == "FILLED":
-            print(f"{self.__class__.__name__}: FILLING TAKE_PROFIT")
+        print(f"{self.__class__.__name__}: FILLING TAKE_PROFIT")
 
-            # Cancel previous stop-loss and place new if stop-loss wasn't moved yet
-            breakeven, pnl, commission = rm.get_info_for_position(tool, ['breakeven', 'pnl', 'commission'])
+        # Cancel previous stop-loss and place new if stop-loss wasn't moved yet
+        breakeven, pnl, commission = rm.get_info_for_position(tool, ['breakeven', 'pnl', 'commission'])
 
-            rm.update_info_for_position(tool, pnl=pnl + new_pnl, commission=commission + new_commission)
+        rm.update_info_for_position(tool, pnl=pnl + new_pnl, commission=commission + new_commission)
 
-            if not breakeven:
-                # Decreasing volume for new stop-loss as take-profit already fixed some volume of position
-                volume_for_stop_loss = rm.get_info_for_position(tool, ['current_volume'])[0] - volume
+        if not breakeven:
+            # Decreasing volume for new stop-loss as take-profit already fixed some volume of position
+            volume_for_stop_loss = rm.get_info_for_position(tool, ['current_volume'])[0] - volume
 
-                rm.update_info_for_position(tool, current_volume=volume_for_stop_loss, last_status="TAKE_PROFIT")
+            rm.update_info_for_position(tool, current_volume=volume_for_stop_loss, last_status="TAKE_PROFIT")
 
-                # If it was the last take
-                if volume_for_stop_loss == 0:
-                    rm.close_position(tool)
-                else:
-                    # Moving stop-loss to breakeven
-                    pos_side, move_stop_after = rm.get_info_for_position(tool, ['pos_side', 'move_stop_after'])
+            # If it was the last take
+            if volume_for_stop_loss == 0:
+                rm.close_position(tool)
+            else:
+                # Moving stop-loss to breakeven
+                pos_side, move_stop_after = rm.get_info_for_position(tool, ['pos_side', 'move_stop_after'])
 
-                    if move_stop_after == 1:
-                        be.cancel_stop_loss_for_tool(tool)
+                if move_stop_after == 1:
+                    be.cancel_stop_loss_for_tool(tool)
 
-                        entry_p, = rm.get_info_for_position(tool, ['entry_p'])
+                    entry_p, = rm.get_info_for_position(tool, ['entry_p'])
 
-                        be.place_stop_loss_order(tool, entry_p, volume_for_stop_loss, pos_side)
-                        rm.update_info_for_position(tool, move_stop_after=move_stop_after - 1, breakeven=True)
+                    be.place_stop_loss_order(tool, entry_p, volume_for_stop_loss, pos_side)
+                    rm.update_info_for_position(tool, move_stop_after=move_stop_after - 1, breakeven=True)
+
 
     def on_message(self, ws, message):
         utf8_data = super().on_message(ws, message)
@@ -213,13 +213,15 @@ class OrderListener(Listener):
                         self.on_fill_primary_order(tool, avg_price, volume, commission)
 
                     elif status == "PARTIALLY_FILLED":
-                        self.on_partial_fill_primary_order(tool, commission)
+                        self.on_partial_fill_primary_order(tool, avg_price, volume, commission)
 
                 elif order_type == "STOP_MARKET":  # CHECK IS THIS WORKS IN FUTURE
-                    self.on_stop(tool, pnl, commission)
+                    if status == "PARTIALLY_FILLED" or status == "FILLED":
+                        self.on_stop(tool, pnl, commission)
 
                 elif order_type == "TAKE_PROFIT_MARKET":
-                    self.on_take_profit(tool, volume, pnl, commission, status)
+                    if status == "PARTIALLY_FILLED" or status == "FILLED":
+                        self.on_take_profit(tool, volume, pnl, commission, status)
 
     def listen_for_events(self):
         self.ws = websocket.WebSocketApp(
