@@ -13,8 +13,8 @@ import bingx_exc as be
 
 class Listener:
     def __init__(self):
-        self.API_KEY = "g1bdJM9yg7bx07R614mv7zBRYxN05L10gglaiwsOWcX2JIqOEzhoZfzM75nVyZBNLp510vb0YxRgF8Zg5Sw"
-        self.SECRET_KEY = "1hdUt8cDl5o3K5mzJeX0k71OzhERLVWnT984jp5gsj4egmz4P4fTbvyoUPga3RQfhuGTchRA3T96lTIJOkQ"
+        self.API_KEY = "AEzYQiFHBmaQ4fp0Cp8cMaLBJpG5aYYqcYyhCjFyYFxOHcvsZJYia74D5gp9GQMFxXkuPNsYZj7BqOWWw"
+        self.SECRET_KEY = "tzvUioOq1XLUlbZoXDrV6WustANnx7cdnO7qxHgYHGfKY9R2xKqe7hBigdz9my33gXe0X47h1vjYMPJqxAg"
 
         self.ws_url = "wss://open-api-swap.bingx.com/swap-market"
 
@@ -101,45 +101,62 @@ class OrderListener(Listener):
     def on_fill_primary_order(self, tool, avg_price, volume, new_commission):
         print(f"{self.__class__.__name__}: ORDER IS FILLED")
 
-        left_volume_to_fill, commission = rm.get_info_for_position(tool, ['left_volume_to_fill', 'commission'])
+        # It seems like because program use multi-threaded, runtime_manager can't finish writing data into json in
+        # add_position() function when order is immediately filled up after its placing, so we've gotta to pause a
+        # bit this function so rm would finish its business
+        time.sleep(1)
 
-        rm.update_info_for_position(tool, entry_p=avg_price, left_volume_to_fill=left_volume_to_fill - volume,
-                                    last_status="FILLED",
-                                    current_volume=volume, commission=commission + new_commission,
-                                    start_time=int(time.time()))
+        left_volume_to_fill, commission, last_status = rm.get_info_for_position(tool,
+                                                                                ['left_volume_to_fill', 'commission',
+                                                                                 'last_status'])
 
-        pos_side, takes, stop, ls = rm.get_info_for_position(tool, ['pos_side', 'take_ps', 'stop_p', 'last_status'])
+        if last_status == "PARTIALLY_FILLED":
+            # If order was previously almost filled - call partial fill func once again
+            self.on_partial_fill_primary_order(tool, avg_price, volume, new_commission)
+        else:
 
-        print(f"LAST                    STATUS OF           POSITION IS NOW: {ls}")
+            print(f"LEFT VOLUME TO FILL: {left_volume_to_fill}")
 
-        # Placing stop-loss
-        be.place_stop_loss_order(tool, stop, volume, pos_side)
+            rm.update_info_for_position(tool, entry_p=avg_price, left_volume_to_fill=left_volume_to_fill - volume,
+                                        last_status="FILLED",
+                                        current_volume=volume, commission=commission + new_commission,
+                                        start_time=int(time.time()))
 
-        # Placing take-profits
-        be.place_take_profit_orders(tool, takes, volume, pos_side)
+            pos_side, takes, stop, ls = rm.get_info_for_position(tool, ['pos_side', 'take_ps', 'stop_p', 'last_status'])
 
-        # Stopping price listener
-        rm.stop_price_listener(tool)
+            print(f"LAST                    STATUS OF           POSITION IS NOW: {ls}")
 
-    def on_partial_fill_primary_order(self, tool, new_commission):
+            # Placing stop-loss
+            be.place_stop_loss_order(tool, stop, volume, pos_side)
+
+            # Placing take-profits
+            be.place_take_profit_orders(tool, takes, volume, pos_side)
+
+            # Stopping price listener
+            rm.stop_price_listener(tool)
+
+    def on_partial_fill_primary_order(self, tool, avg_price, volume, new_commission):
         # Should send notification for control from my side, as maybe some mistakes here due to rareness
         # of this status
 
+        # IN PROGRESS... DOESN'T WORK YET
+
         print(f"{self.__class__.__name__}: ORDER IS PARTIALLY FILLED")
 
-        # Set start_time only if it wasn't set yet
-        start_time, commission = rm.get_info_for_position(tool, ['start_time', 'commission'])
+        # It seems like because program use multi-threaded, runtime_manager can't finish writing data into json in
+        # add_position() function when order is immediately filled up after its placing, so we got to pause a
+        # bit this function so rm would finish its business
+        time.sleep(1)
 
-        if start_time is None:
-            rm.update_info_for_position(tool, commission=commission + new_commission,
-                                        last_status="PARTIALLY_FILLED")
+        # Set start_time only if it wasn't set yet
+        left_volume_to_fill, start_time, commission = rm.get_info_for_position(tool,
+                                                                               ['left_volume_to_fill', 'start_time',
+                                                                                'commission'])
+
+        rm.update_info_for_position(tool, commission=commission + new_commission, last_status="PARTIALLY_FILLED")
 
         # Stopping price listener
         rm.stop_price_listener(tool)
-
-    def on_cancel_primary_order(self, tool):
-        rm.update_info_for_position(tool, last_status="CANCELLED")
-        rm.close_position(tool)
 
     def on_stop(self, tool, new_pnl, new_commission):
         commission, pnl = rm.get_info_for_position(tool, ['commission', 'pnl'])
@@ -162,7 +179,7 @@ class OrderListener(Listener):
 
                 rm.update_info_for_position(tool, current_volume=volume_for_stop_loss, last_status="TAKE_PROFIT")
 
-                # If it was the last take - remove order from run-time book?
+                # If it was the last take
                 if volume_for_stop_loss == 0:
                     rm.close_position(tool)
                 else:
@@ -195,14 +212,10 @@ class OrderListener(Listener):
                     if status == "FILLED":
                         self.on_fill_primary_order(tool, avg_price, volume, commission)
 
-                    elif status == "CANCELED":
-                        # Position cancelation will work from exchange site too - not yet
-                        self.on_cancel_primary_order(tool)
-
                     elif status == "PARTIALLY_FILLED":
                         self.on_partial_fill_primary_order(tool, commission)
 
-                elif order_type == "STOP":  # CHECK IS THIS WORKS IN FUTURE
+                elif order_type == "STOP_MARKET":  # CHECK IS THIS WORKS IN FUTURE
                     self.on_stop(tool, pnl, commission)
 
                 elif order_type == "TAKE_PROFIT_MARKET":
@@ -235,14 +248,14 @@ class PriceListener(Listener):
 
             if pos_side == "LONG":
                 if price <= over:
-                    be.cancel_primary_order_for_tool(self.tool, True)
-                elif price >= take:
                     be.cancel_primary_order_for_tool(self.tool, False)
+                elif price >= take:
+                    be.cancel_primary_order_for_tool(self.tool, True)
             else:
-                if price <= over:
-                    be.cancel_primary_order_for_tool(self.tool, True)
-                elif price >= take:
+                if price >= over:
                     be.cancel_primary_order_for_tool(self.tool, False)
+                elif price <= take:
+                    be.cancel_primary_order_for_tool(self.tool, True)
 
         except Exception as e:
             #print(f"{__class__.__name__}, {self.tool}: Cancelation levels for {self.tool} not specified: {e}")

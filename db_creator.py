@@ -199,8 +199,8 @@ class Trade(Base):
         self.screen_zoomed = screen_zoomed
 
     def __repr__(self):
-        utc_start = datetime.fromtimestamp(self.start_time)
-        utc_end = datetime.fromtimestamp(self.end_time)
+        utc_start = self.start_time
+        utc_end = self.end_time
         return (
             f"<Trade(trade_id={self.trade_id}, tool={self.tool}, side={self.side}, start_time={utc_start}, end_time={utc_end}"
             f"volume={self.volume}, risk_usdt={self.risk_usdt}, tags={self.tags}, "

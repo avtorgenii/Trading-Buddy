@@ -98,11 +98,10 @@ def close_position(tool):
                                            start_time=start_time,
                                            end_time=int(time.time()))
 
+    # Updating run-time json
     del orders[tool]
-
     put_data(orders)
 
-    # Deleting price listener
     stop_price_listener(tool)
 
 
@@ -113,8 +112,9 @@ def cancel_position(tool):
     orders = get_data()
 
     del orders[tool]
-
     put_data(orders)
+
+    db_interface.remove_last_trade_of_tool(tool.replace("-USDT", ""))
 
     # Deleting price listener
     stop_price_listener(tool)

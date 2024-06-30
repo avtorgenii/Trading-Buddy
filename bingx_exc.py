@@ -8,8 +8,8 @@ from db_manager import DBInterface
 import math_helper as mh
 import runtime_manager as rm
 
-API_KEY = "g1bdJM9yg7bx07R614mv7zBRYxN05L10gglaiwsOWcX2JIqOEzhoZfzM75nVyZBNLp510vb0YxRgF8Zg5Sw"
-SECRET_KEY = "1hdUt8cDl5o3K5mzJeX0k71OzhERLVWnT984jp5gsj4egmz4P4fTbvyoUPga3RQfhuGTchRA3T96lTIJOkQ"
+API_KEY = "AEzYQiFHBmaQ4fp0Cp8cMaLBJpG5aYYqcYyhCjFyYFxOHcvsZJYia74D5gp9GQMFxXkuPNsYZj7BqOWWw"
+SECRET_KEY = "tzvUioOq1XLUlbZoXDrV6WustANnx7cdnO7qxHgYHGfKY9R2xKqe7hBigdz9my33gXe0X47h1vjYMPJqxAg"
 ACCOUNT_NAME = "BingX"
 
 client = PerpetualV2(api_key=API_KEY, secret_key=SECRET_KEY)
@@ -142,7 +142,7 @@ def cancel_stop_loss_for_tool(tool):
     print(f"STOP ORDER CANCELLATION RESPONSE: {resp}")
 
 
-def cancel_primary_order_for_tool(tool, cancel_by_overlow=False):
+def cancel_primary_order_for_tool(tool, save_to_db=False):
     orders = get_orders_for_tool(tool)
 
     print(orders)
@@ -151,11 +151,12 @@ def cancel_primary_order_for_tool(tool, cancel_by_overlow=False):
 
     resp = client.trade.cancel_order(entry_order_id, tool)
 
-    # Don't save position to db only if it was cancelled by overlow
-    if cancel_by_overlow:
-        rm.cancel_position(tool)
-    else:
+    print(f"SAVE TO DB: {save_to_db}")
+
+    if save_to_db:
         rm.close_position(tool)
+    else:
+        rm.cancel_position(tool)
 
     print(f"PRIMARY ORDER CANCELLATION RESPONSE: {resp}")
 
@@ -244,6 +245,6 @@ def get_pending_positions_info():
 """DEBUG"""
 if __name__ == '__main__':
     #place_open_order("OP-USDT", 0, 1.803, 1.7776, [1.8348, 1.85], 1, 50, 1)
-    res = get_pending_positions_info()
+    res = get_account_details()
 
     print(res)

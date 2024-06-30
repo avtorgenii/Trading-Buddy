@@ -57,13 +57,19 @@ class DBInterface:
         Parameters:
         - tool (str): Name of the tool.
         - side (str): The side of the trade (e.g., "лонг" or "шорт").
-
-        Returns:
-        trade_id (int)
+        - risk_usdt (float): Potential loss of a trade
         """
         trade = Trade(**kwargs)
 
         self.session.add(trade)
+        self.session.commit()
+
+    def remove_last_trade_of_tool(self, tool):
+        last_trade = self.session.query(Trade).filter_by(tool=tool).order_by(Trade.trade_id.desc()).first()
+
+        if last_trade:
+            self.session.delete(last_trade)
+            self.session.commit()
 
     def update_last_trade_of_tool(self, tool, **kwargs):
         """
