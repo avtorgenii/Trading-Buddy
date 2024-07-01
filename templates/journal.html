@@ -23,6 +23,28 @@
         .blurred {
             filter: blur(5px);
         }
+
+        body.modal-open,
+        .navbar {
+            padding-right: 0 !important;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .dragging {
+            border-color: #000;
+        }
+
+        .preview-area img {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 
@@ -38,8 +60,6 @@
             </a>
         </div>
     </nav>
-
-
 
     <!--Trading Journal-->
     <section id="journal" class="d-none d-sm-block">
@@ -68,8 +88,8 @@
                     <tbody>
                         {% for trade in trades %}
                         <tr>
-                            <td data-trade-id="{{ trade.trade_id }}" data-field="tool">{{ trade.trade_id }}
-                            </td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="trade_id">{{
+                                trade.trade_id }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="tool">{{ trade.tool }}
                             </td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="side">{{ trade.side }}
@@ -80,8 +100,10 @@
                                 trade.risk_usdt }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="tags">{{ trade.tags }}
                             </td>
-                            <td data-trade-id="{{ trade.trade_id }}" data-field="start_time" data-unix="{{ trade.start_time }}">{{ trade.start_time }}</td>
-                            <td data-trade-id="{{ trade.trade_id }}" data-field="end_time" data-unix="{{ trade.end_time }}">{{ trade.end_time }}</td>
+                            <td data-trade-id="{{ trade.trade_id }}" data-field="start_time"
+                                data-unix="{{ trade.start_time }}">{{ trade.start_time }}</td>
+                            <td data-trade-id="{{ trade.trade_id }}" data-field="end_time"
+                                data-unix="{{ trade.end_time }}">{{ trade.end_time }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="reason_of_entry">{{
                                 trade.reason_of_entry }}</td>
                             <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="reason_of_exit">{{
@@ -103,6 +125,15 @@
     </section>
 
 
+
+
+
+
+
+
+
+
+
     <!-- Modal for editing -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -115,7 +146,7 @@
                     <form>
                         <div class="mb-3">
                             <label for="editValue" class="form-label">New Value:</label>
-                            <input type="text" class="form-control" id="editValue">
+                            <textarea class="form-control" id="editValue" rows="1"></textarea>
                         </div>
                         <input type="hidden" id="editTradeId">
                         <input type="hidden" id="editField">
@@ -137,19 +168,39 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <!-- Modal for screen editing -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Trade</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <div class="mb-3">
+                            <label for="editValue" class="form-label">New Value:</label>
+                            <textarea class="form-control" id="editValue" rows="1"></textarea>
+                        </div>
+                        <div class="mb-3 drop-area" id="screenDropArea">
+                            <input type="file" id="screen" style="display: none;">
+                            <div id="screenPreview">Drag and drop an image here or click to select.</div>
+                        </div>
+                        <div class="mb-3 drop-area" id="screenZoomedDropArea">
+                            <input type="file" id="screenZoomed" style="display: none;">
+                            <div id="screenZoomedPreview">Drag and drop an image here or click to select.</div>
+                        </div>
+                        <input type="hidden" id="editTradeId">
+                        <input type="hidden" id="editField">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveChanges">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"

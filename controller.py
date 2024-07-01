@@ -1,3 +1,4 @@
+import base64
 import threading
 from typing import List
 
@@ -208,15 +209,32 @@ def update_comment(comment_info: CommentUpdateData):
 
 class EmotionalStateUpdateData(BaseModel):
     tool: str
-    state: str
+    emotional_state: str
 
 
 @app.post("/update-emotional-state/")
 def update_comment(emotional_state_info: EmotionalStateUpdateData):
     tool = emotional_state_info.tool.replace("-USDT", "")
-    emotional_state = emotional_state_info.state
+    emotional_state = emotional_state_info.emotional_state
 
     db_interface.update_last_trade_of_tool(tool, emotional_state=emotional_state)
+
+
+@app.get('/get-trade-images/{trade_id}')
+def get_trade_images(trade_id: int):
+    info = db_interface.get_info_for_trade(trade_id, ['screen', 'screen_zoomed'])
+
+    if info is not None:
+        screen = base64.b64encode(info[0]).decode('utf-8') if info[0] else None
+        screen_zoomed = base64.b64encode(info[1]).decode('utf-8') if info[1] else None
+
+
+        return {
+                "screen": screen,  # Assuming you store the image path or base64 encoded string
+                "screen_zoomed": screen_zoomed
+                }
+    else:
+        return {"screen": None, "screen_zoomed": None}
 
 
 @app.get("/", response_class=HTMLResponse)

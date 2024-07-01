@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from db_creator import (Account, Trade, Tool)
 
@@ -70,6 +71,32 @@ class DBInterface:
         if last_trade:
             self.session.delete(last_trade)
             self.session.commit()
+
+    def get_info_for_trade(self, trade_id, params: List[str]):
+        """
+        Retrieves specific information for a trade with the given trade_id.
+
+        Parameters:
+         - trade_id (int): The ID of the trade to retrieve.
+        - params (List[str]): The list of fields to retrieve.
+
+        Returns:
+        - list: A list containing the requested values for fields
+        """
+        trade = self.session.query(Trade).filter_by(trade_id=trade_id).first()
+
+        if not trade:
+            print(f"Trade with trade_id: {trade_id} does not exist")
+            return None
+
+        trade_info = []
+        for param in params:
+            if hasattr(trade, param):
+                trade_info.append(getattr(trade, param))
+            else:
+                print(f"Trade does not have attribute '{param}'")
+
+        return trade_info
 
     def update_last_trade_of_tool(self, tool, **kwargs):
         """
