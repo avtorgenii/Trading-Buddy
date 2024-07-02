@@ -1,7 +1,0 @@
-Program works fine if:
-1. One tool - one position at a time
-2. Don't move/cancel orders placed from program directly at exchange site
-3. Position entry only by limit orders
-4. Part takes should be entered ascending/descending according to position side
-5. No comas(,) entering price levels, only dots(.)
-6.

@@ -1,0 +1,15 @@
+{
+  "name": "trading-buddy",
+  "version": "1.0.0",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

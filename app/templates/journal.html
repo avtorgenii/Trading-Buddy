@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <title>Trading Buddy</title>
+    <link rel="manifest" href="/app/staticebmanifest" />
+    <style>
+        section {
+            padding: 60px, 0
+        }
+
+        html,
+        body {
+            overflow-x: hidden;
+            scroll-padding-top: 90px;
+        }
+
+        .blurred {
+            filter: blur(5px);
+        }
+
+        body.modal-open,
+        .navbar {
+            padding-right: 0 !important;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .dragging {
+            border-color: #000;
+        }
+
+        .preview-area img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!--Navbar-->
+    <nav class="navbar navbar-expand-md navbar-light bg-light fixed-top">
+        <div class="container-xxl">
+            <a href="/" class="navbar-brand">
+                <span class="fw-bold text-primary display-5">
+                    Trading Buddy
+                </span>
+            </a>
+        </div>
+    </nav>
+
+    <!--Trading Journal-->
+    <section id="journal" class="d-none d-sm-block">
+        <div class="container-fluid mt-5 pt-5">
+            <h1>Journal</h1>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Trade No.</th>
+                            <th>Tool</th>
+                            <th>Side</th>
+                            <th>Volume</th>
+                            <th>Risk</th>
+                            <th>Tags</th>
+                            <th>Start Time UTC</th>
+                            <th>End Time UTC</th>
+                            <th>Reason of Entry</th>
+                            <th>Reason of Exit</th>
+                            <th>PnL</th>
+                            <th>Commission</th>
+                            <th>Comment</th>
+                            <th>Emotional State</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                        <tr>
+                            <td class="editableScreen" data-trade-id="{{ trade.trade_id }}" data-field="trade_id">{{
+                                trade.trade_id }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="tool">{{ trade.tool }}
+                            </td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="side">{{ trade.side }}
+                            </td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="volume">{{
+                                trade.volume }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="risk_usdt">{{
+                                trade.risk_usdt }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="tags">{{ trade.tags }}
+                            </td>
+                            <td data-trade-id="{{ trade.trade_id }}" data-field="start_time"
+                                data-unix="{{ trade.start_time }}">{{ trade.start_time }}</td>
+                            <td data-trade-id="{{ trade.trade_id }}" data-field="end_time"
+                                data-unix="{{ trade.end_time }}">{{ trade.end_time }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="reason_of_entry">{{
+                                trade.reason_of_entry }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="reason_of_exit">{{
+                                trade.reason_of_exit }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="pnl_usdt">{{
+                                trade.pnl_usdt }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="commission">{{
+                                trade.commission }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="comment">{{
+                                trade.comment }}</td>
+                            <td class="editable" data-trade-id="{{ trade.trade_id }}" data-field="emotional_state">{{
+                                trade.emotional_state }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal for editing text fields -->
+    <div class="modal fade" id="editTextModal" tabindex="-1" aria-labelledby="editTextModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTextModalLabel">Edit Cell</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="editValue" class="form-label">New Value:</label>
+                            <textarea class="form-control" id="editValue" rows="1"></textarea>
+                        </div>
+                        <input type="hidden" id="editTradeId">
+                        <input type="hidden" id="editField">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveChanges">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for screen editing -->
+    <div class="modal fade" id="editScreenModal" tabindex="-1" aria-labelledby="editScreenModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editScreenModalLabel">Edit Trade</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <div class="mb-3 drop-area" id="screenDropArea">
+                            <input type="file" id="screen" style="display: none;">
+                            <div id="screenPreview" class="drag-drop-area">Drag and drop an image here or click to
+                                select.</div>
+                        </div>
+                        <div class="mb-3 drop-area" id="screenZoomedDropArea">
+                            <input type="file" id="screenZoomed" style="display: none;">
+                            <div id="screenZoomedPreview" class="drag-drop-area">Drag and drop an image here or click to
+                                select.</div>
+                        </div>
+                        <input type="hidden" id="editScreenTradeId">
+                        <input type="hidden" id="editScreenField">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveScreenChanges">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="static/journal_script.js"></script>
+</body>
+
+</html>
