@@ -193,7 +193,6 @@ class OrderListener(Listener):
                     be.place_stop_loss_order(tool, entry_p, volume_for_stop_loss, pos_side)
                     rm.update_info_for_position(tool, move_stop_after=move_stop_after - 1, breakeven=True)
 
-
     def on_message(self, ws, message):
         utf8_data = super().on_message(ws, message)
 

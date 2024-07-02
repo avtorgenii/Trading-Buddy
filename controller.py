@@ -1,9 +1,9 @@
 import base64
 import threading
-from typing import List
+from typing import List, Optional
 
 import uvicorn
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -228,13 +228,30 @@ def get_trade_images(trade_id: int):
         screen = base64.b64encode(info[0]).decode('utf-8') if info[0] else None
         screen_zoomed = base64.b64encode(info[1]).decode('utf-8') if info[1] else None
 
-
         return {
-                "screen": screen,  # Assuming you store the image path or base64 encoded string
-                "screen_zoomed": screen_zoomed
-                }
+            "screen": screen,  # Assuming you store the image path or base64 encoded string
+            "screen_zoomed": screen_zoomed
+        }
     else:
         return {"screen": None, "screen_zoomed": None}
+
+
+@app.post("/update-trade-screens/")
+async def update_trade_screens(
+    trade_id: int = Form(...),
+    screen: Optional[UploadFile] = File(None),
+    screen_zoomed: Optional[UploadFile] = File(None),
+):
+
+    screen_data = await screen.read() if screen else None
+    screen_zoomed_data = await screen_zoomed.read() if screen_zoomed else None
+
+    try:
+        db_interface.update_trade(trade_id, screen=screen_data, screen_zoomed=screen_zoomed_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"message": "Trade updated successfully"}
 
 
 @app.get("/", response_class=HTMLResponse)

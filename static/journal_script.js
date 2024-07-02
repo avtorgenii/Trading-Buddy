@@ -1,10 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
     const editableCells = document.querySelectorAll('.editable');
-    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    const editableScreenCells = document.querySelectorAll('.editableScreen');
+    const editTextModal = new bootstrap.Modal(document.getElementById('editTextModal'));
+    const editScreenModal = new bootstrap.Modal(document.getElementById('editScreenModal'));
     const editValueInput = document.getElementById('editValue');
     const editTradeIdInput = document.getElementById('editTradeId');
     const editFieldInput = document.getElementById('editField');
     const saveChangesButton = document.getElementById('saveChanges');
+
+    const editScreenTradeIdInput = document.getElementById('editScreenTradeId');
+    const editScreenFieldInput = document.getElementById('editScreenField');
+    const saveScreenChangesButton = document.getElementById('saveScreenChanges');
 
     const handleFileSelect = (event, previewId) => {
         const file = event.target.files[0];
@@ -32,6 +38,18 @@ document.addEventListener('DOMContentLoaded', function () {
             editFieldInput.value = field;
             editValueInput.value = currentValue;
 
+            editTextModal.show();
+        });
+    });
+
+    editableScreenCells.forEach(cell => {
+        cell.addEventListener('click', function () {
+            const tradeId = this.getAttribute('data-trade-id');
+            const field = this.getAttribute('data-field');
+
+            editScreenTradeIdInput.value = tradeId;
+            editScreenFieldInput.value = field;
+
             // Fetch existing images for the trade and show them in the modal
             fetch(`/get-trade-images/${tradeId}`)
                 .then(response => response.json())
@@ -48,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
 
-            editModal.show();
+            editScreenModal.show();
         });
     });
 
@@ -56,13 +74,34 @@ document.addEventListener('DOMContentLoaded', function () {
         const tradeId = editTradeIdInput.value;
         const field = editFieldInput.value;
         const newValue = editValueInput.value;
+
+        fetch('/update-trade/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ trade_id: tradeId, field: field, value: newValue }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Trade updated successfully:', data);
+                document.querySelector(`.editable[data-trade-id="${tradeId}"][data-field="${field}"]`).textContent = newValue;
+                editTextModal.hide();
+            })
+            .catch(error => {
+                console.error('Error updating trade:', error);
+            });
+    });
+
+    saveScreenChangesButton.addEventListener('click', function () {
+        const tradeId = editScreenTradeIdInput.value;
+        const field = editScreenFieldInput.value;
         const screenFile = document.getElementById('screen').files[0];
         const screenZoomedFile = document.getElementById('screenZoomed').files[0];
 
         const formData = new FormData();
         formData.append('trade_id', tradeId);
         formData.append('field', field);
-        formData.append('value', newValue);
         if (screenFile) {
             formData.append('screen', screenFile);
         }
@@ -70,15 +109,14 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.append('screen_zoomed', screenZoomedFile);
         }
 
-        fetch('/update-trade/', {
+        fetch('/update-trade-screens/', {
             method: 'POST',
             body: formData
         })
             .then(response => response.json())
             .then(data => {
                 console.log('Trade updated successfully:', data);
-                document.querySelector(`.editable[data-trade-id="${tradeId}"][data-field="${field}"]`).textContent = newValue;
-                editModal.hide();
+                editScreenModal.hide();
             })
             .catch(error => {
                 console.error('Error updating trade:', error);
@@ -96,8 +134,8 @@ document.addEventListener('DOMContentLoaded', function () {
         adjustHeight(textarea);
     });
 
-    const editModalElement = document.getElementById('editModal');
-    editModalElement.addEventListener('shown.bs.modal', function () {
+    const editTextModalElement = document.getElementById('editTextModal');
+    editTextModalElement.addEventListener('shown.bs.modal', function () {
         adjustHeight(textarea);
     });
 
@@ -139,6 +177,22 @@ document.addEventListener('DOMContentLoaded', function () {
         const file = event.dataTransfer.files[0];
         document.getElementById('screenZoomed').files = event.dataTransfer.files;
         handleFileSelect({ target: { files: [file] } }, 'screenZoomedPreview');
+    });
+
+    // Function to convert Unix time to readable date format
+    const convertUnixToDate = (unixTime) => {
+        const date = new Date(unixTime * 1000); // Convert to milliseconds
+        return date.toUTCString().replace(' GMT', ''); // Convert to UTC string and remove GMT
+    };
+
+    const unixFields = document.querySelectorAll('td[data-unix]');
+    unixFields.forEach(field => {
+        const unixTime = parseInt(field.getAttribute('data-unix'), 10);
+        if (!isNaN(unixTime)) {
+            field.textContent = convertUnixToDate(unixTime);
+        } else {
+            field.textContent = '';
+        }
     });
 });
 
