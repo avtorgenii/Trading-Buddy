@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from db_creator import (Account, Trade, Tool)
+from .db_creator import (Account, Trade, Tool)
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base

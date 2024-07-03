@@ -7,8 +7,8 @@ import io
 import schedule
 
 from bingX.perpetual.v2.other import Other
-import runtime_manager as rm
-import bingx_exc as be
+from . import runtime_manager as rm
+from . import bingx_exc as be
 
 
 class Listener:

@@ -4,8 +4,7 @@ from os import getenv
 
 import requests
 
-from server import CancelPositionData
-from db_manager import DBInterface
+from .db_manager import DBInterface
 
 """
 File Template:
@@ -66,12 +65,12 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
 
 def stop_price_listener(tool: str):
     port = int(getenv("PORT", 8080))
-    base_url = f"http://127.0.0.1:{port}"  # Change when deploying on server, or find a way how to get it dynamically like JS does
+    base_url = f"http://127.0.0.1:{port}"
     route = "/stop-price-listener/"
     url = base_url + route
 
-    cancel_data = CancelPositionData(tool=tool)
-    response = requests.post(url, json=cancel_data.model_dump())
+    cancel_data = {"tool": tool}
+    response = requests.post(url, json=cancel_data)
 
     if response.status_code == 200:
         print("Price listener stopped successfully:", response.json())

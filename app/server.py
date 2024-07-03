@@ -1,19 +1,17 @@
 import base64
 import threading
-from os import getenv
 from typing import List, Optional
 
-import uvicorn
 from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from db_manager import DBInterface
-import runtime_manager as rm
-import bingx_exc as be
-from listener import OrderListener, PriceListener
+from .db_manager import DBInterface
+from . import runtime_manager as rm
+from . import bingx_exc as be
+from .listener import OrderListener, PriceListener
 
 app = FastAPI()
 
@@ -21,7 +19,8 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # Mount the static files directory
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount(""
+          "/static", StaticFiles(directory="static"), name="static")
 
 db_interface = DBInterface("BingX")
 
@@ -49,14 +48,9 @@ def delete_price_listener_for_tool(tool):
         print("Price listener already deleted")
 
 
-class CancelPositionData(BaseModel):
-    tool: str
-
-
-# Removing price listener
 @app.post("/stop-price-listener/")
-def stop_price_listener(cancel_data: CancelPositionData):
-    delete_price_listener_for_tool(cancel_data.tool)
+def stop_price_listener(cancel_data: dict):
+    delete_price_listener_for_tool(cancel_data['tool'])
 
 
 class AccountUpdateData(BaseModel):
@@ -170,8 +164,8 @@ def place_trade(pos_data: PositionData):
 
 
 @app.post("/cancel-trade/")
-def cancel_trade(trade_data: CancelPositionData):
-    tool = trade_data.tool
+def cancel_trade(trade_data: dict):
+    tool = trade_data['tool']
 
     be.cancel_primary_order_for_tool(tool)
 
@@ -288,13 +282,12 @@ def start_listener():
     listener.listen_for_events()
 
 
-if __name__ == "__main__":
-    # Starting orders listener
-    listener_thread = threading.Thread(target=start_listener)
-    listener_thread.start()
 
-    port = int(getenv("PORT", 8080))
-    uvicorn.run("app.server:app", host="0.0.0.0", port=port, reload=True)
+# Starting orders listener
+listener_thread = threading.Thread(target=start_listener)
+listener_thread.start()
+
+
 
 
 
