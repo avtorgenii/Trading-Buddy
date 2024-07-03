@@ -9,4 +9,3 @@ SQLAlchemy==2.0.30
 uvicorn==0.20.0
 websocket_client==1.8.0
 python-bingx==1.0.0
-

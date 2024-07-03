@@ -2,9 +2,9 @@ from bingX.perpetual.v2 import PerpetualV2
 from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
 from bingX.exceptions import ClientError
 
-from .db_manager import DBInterface
-from . import math_helper as mh
-from . import runtime_manager as rm
+from app.db_manager import DBInterface
+from app import math_helper as mh
+from app import runtime_manager as rm
 
 API_KEY = "AEzYQiFHBmaQ4fp0Cp8cMaLBJpG5aYYqcYyhCjFyYFxOHcvsZJYia74D5gp9GQMFxXkuPNsYZj7BqOWWw"
 SECRET_KEY = "tzvUioOq1XLUlbZoXDrV6WustANnx7cdnO7qxHgYHGfKY9R2xKqe7hBigdz9my33gXe0X47h1vjYMPJqxAg"

@@ -1,5 +1,6 @@
 import base64
 import threading
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
@@ -8,19 +9,23 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .db_manager import DBInterface
-from . import runtime_manager as rm
-from . import bingx_exc as be
-from .listener import OrderListener, PriceListener
+from app.db_manager import DBInterface
+from app import runtime_manager as rm
+from app import bingx_exc as be
+from app.listener import OrderListener, PriceListener
 
 app = FastAPI()
 
+# Get the absolute path for the templates and static directories
+base_path = Path(__file__).parent
+templates_path = base_path / "templates"
+static_path = base_path / "static"
+
 # Create a Jinja2 templates object
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=str(templates_path))
 
 # Mount the static files directory
-app.mount(""
-          "/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 db_interface = DBInterface("BingX")
 
@@ -233,11 +238,10 @@ def get_trade_images(trade_id: int):
 
 @app.post("/update-trade-screens/")
 async def update_trade_screens(
-    trade_id: int = Form(...),
-    screen: Optional[UploadFile] = File(None),
-    screen_zoomed: Optional[UploadFile] = File(None),
+        trade_id: int = Form(...),
+        screen: Optional[UploadFile] = File(None),
+        screen_zoomed: Optional[UploadFile] = File(None),
 ):
-
     screen_data = await screen.read() if screen else None
     screen_zoomed_data = await screen_zoomed.read() if screen_zoomed else None
 
@@ -282,13 +286,6 @@ def start_listener():
     listener.listen_for_events()
 
 
-
 # Starting orders listener
 listener_thread = threading.Thread(target=start_listener)
 listener_thread.start()
-
-
-
-
-
-

@@ -1,10 +1,11 @@
 import json
+import os
 import time
 from os import getenv
 
 import requests
 
-from .db_manager import DBInterface
+from app.db_manager import DBInterface
 
 """
 File Template:
@@ -32,15 +33,16 @@ File Template:
 
 db_interface = DBInterface("BingX")
 
+POS_PATH = os.path.join(os.path.dirname(__file__), 'positions.json')
 
 def get_data():
-    with open('positions.json', 'r') as f:
+    with open(POS_PATH, 'r') as f:
         positions = json.load(f)
         return positions
 
 
 def put_data(new_positions):
-    with open('positions.json', 'w') as f:
+    with open(POS_PATH, 'w') as f:
         json.dump(new_positions, f, indent=4)
 
 
