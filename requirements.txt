@@ -8,4 +8,5 @@ setuptools==69.5.1
 SQLAlchemy==2.0.30
 uvicorn==0.20.0
 websocket_client==1.8.0
-python-bingx==1.0.0
+jinja2==3.1.4
+python-multipart==0.0.6

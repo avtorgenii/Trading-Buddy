@@ -6,7 +6,7 @@
     "start": "python server.py"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "keywords": [],
   "author": "",
