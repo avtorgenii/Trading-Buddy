@@ -65,10 +65,13 @@ class AccountUpdateData(BaseModel):
 
 @app.put("/update-account-data/")
 def update_risk(account_update: AccountUpdateData):
-    db_interface.update_risk(account_update.risk)
-    db_interface.update_deposit(account_update.deposit)
-
-    return {"message": "Risk updated successfully"}
+    try:
+        db_interface.update_risk(account_update.risk)
+        db_interface.update_deposit(account_update.deposit)
+    except Exception as e:
+        print(e)
+        return {"message": "Failed to update account data"}
+    return {"message": "Account data updated successfully"}
 
 
 class ToolRequestData(BaseModel):

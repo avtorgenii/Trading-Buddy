@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from typing import List
 
-from app.db_creator import (Account, Trade, Tool)
+from app.db_creator import (Account, Trade, Tool, create_db, get_db_path)
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -12,8 +12,7 @@ class DBInterface:
     def __init__(self, account_name, echo=False):
         self.account_name = account_name
 
-        DATABASE_URL = os.path.join(os.path.dirname(__file__), 'trading.db')
-        engine = create_engine(f"sqlite:///{DATABASE_URL}", echo=echo)
+        engine = create_engine(get_db_path(), echo=echo)
 
         Base = declarative_base()
         Base.metadata.create_all(bind=engine)

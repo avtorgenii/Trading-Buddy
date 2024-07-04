@@ -4,10 +4,12 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 import pandas as pd
 
+import psycopg2
 
 from datetime import datetime, time
 
 from app.math_helper import floor_to_digits, convert_to_unix
+
 
 def excel_to_csv(excel):
     # Load the Excel file
@@ -208,11 +210,19 @@ class Trade(Base):
             f"pnl_usdt={self.pnl_usdt}, commission={self.commission}, comment={self.comment}, emotional_state={self.emotional_state})>")
 
 
+def get_db_path():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    tmp_dir = os.path.join(base_dir, 'tmp')
+
+    return f"sqlite:///{os.path.join(tmp_dir, 'trading.db')}"
+
+
 def create_db(echo=False):
     """
     Delete .db file before firing this func
     """
-    engine = create_engine("sqlite:///trading.db", echo=echo)
+
+    engine = create_engine(get_db_path(), echo=echo)
 
     Base.metadata.create_all(bind=engine)
 
@@ -227,4 +237,4 @@ def create_db(echo=False):
 
 
 if __name__ == '__main__':
-    create_db()
+    create_db(echo=True)

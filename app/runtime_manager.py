@@ -33,7 +33,9 @@ File Template:
 
 db_interface = DBInterface("BingX")
 
-POS_PATH = os.path.join(os.path.dirname(__file__), 'positions.json')
+base_dir = os.path.dirname(__file__)
+tmp_dir = os.path.join(base_dir, 'tmp')
+POS_PATH = os.path.join(tmp_dir, 'positions.json')
 
 def get_data():
     with open(POS_PATH, 'r') as f:
