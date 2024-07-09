@@ -131,7 +131,7 @@ class TradeUpdateData(BaseModel):
     value: str
 
 
-@app.put("/update-trade/")
+@app.post("/update-trade/")
 def update_trade(trade_update: TradeUpdateData):
     update_data = {trade_update.field: trade_update.value}
     db_interface.update_trade(trade_update.trade_id, **update_data)

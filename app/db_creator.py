@@ -1,10 +1,9 @@
+import faulthandler
 import os.path
-from sqlalchemy import create_engine, Column, String, Integer, LargeBinary, DateTime, Float, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, LargeBinary, URL, Float, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 import pandas as pd
-
-import psycopg2
 
 from datetime import datetime, time
 
@@ -85,11 +84,11 @@ def csv_to_sql(csv_file, db_session, deposit, risk):
             start_time=convert_to_unix(d['date_time']),
             end_time=None,
             reason_of_entry=d.get('reason_of_entry'),
-            reason_of_exit=d.get('reason_of_exit'),
+            reason_of_exit=str(d.get('reason_of_exit')),
             pnl_usdt=floor_to_digits(d.get('pnl'), 3),
             commission=d.get('commission'),
-            comment=d.get('comment'),
-            emotional_state=d.get('emotional_state')
+            comment=str(d.get('comment')),
+            emotional_state=str(d.get('emotional_state'))
         )
 
         db_session.add(trade)
@@ -210,11 +209,20 @@ class Trade(Base):
             f"pnl_usdt={self.pnl_usdt}, commission={self.commission}, comment={self.comment}, emotional_state={self.emotional_state})>")
 
 
-def get_db_path():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    tmp_dir = os.path.join(base_dir, 'tmp')
+def get_db_string():
+    if os.getenv("DATABASE_URL") is None:
+        return "sqlite:///trading.db"
+    else:
+        connection_string = URL.create(
+            'postgresql',
+            username='trading_owner',
+            password='5Ta2IvJDoZLS',
+            host='ep-misty-union-a2p06y27.eu-central-1.aws.neon.tech',
+            database='trading',
+            query={'sslmode': 'require', 'options': 'endpoint=ep-misty-union-a2p06y27'}
+        )
 
-    return f"sqlite:///{os.path.join(tmp_dir, 'trading.db')}"
+        return connection_string
 
 
 def create_db(echo=False):
@@ -222,12 +230,12 @@ def create_db(echo=False):
     Delete .db file before firing this func
     """
 
-    engine = create_engine(get_db_path(), echo=echo)
-
-    Base.metadata.create_all(bind=engine)
+    engine = create_engine(get_db_string(), echo=echo)
 
     Session = sessionmaker(bind=engine)
     session = Session()
+
+    Base.metadata.create_all(bind=engine)
 
     csv_to_sql("used/df.csv", session, 90.34, 3)
 

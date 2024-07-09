@@ -33,9 +33,8 @@ File Template:
 
 db_interface = DBInterface("BingX")
 
-base_dir = os.path.dirname(__file__)
-tmp_dir = os.path.join(base_dir, 'tmp')
-POS_PATH = os.path.join(tmp_dir, 'positions.json')
+POS_PATH = os.getenv("POSITIONS_PATH", "positions.json")
+
 
 def get_data():
     with open(POS_PATH, 'r') as f:
@@ -46,6 +45,9 @@ def get_data():
 def put_data(new_positions):
     with open(POS_PATH, 'w') as f:
         json.dump(new_positions, f, indent=4)
+
+
+put_data({})
 
 
 def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume, risk, leverage, trigger_p):
@@ -69,7 +71,7 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
 
 def stop_price_listener(tool: str):
     port = int(getenv("PORT", 8080))
-    base_url = f"http://127.0.0.1:{port}"
+    base_url = os.getenv("SITE_URL", f"http://127.0.0.1:{port}")
     route = "/stop-price-listener/"
     url = base_url + route
 

@@ -1,21 +1,17 @@
-import os
 from datetime import datetime
 from typing import List
 
-from app.db_creator import (Account, Trade, Tool, create_db, get_db_path)
+from app.db_creator import (Account, Trade, Tool, get_db_string)
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
 class DBInterface:
     def __init__(self, account_name, echo=False):
         self.account_name = account_name
 
-        engine = create_engine(get_db_path(), echo=echo)
-
-        Base = declarative_base()
-        Base.metadata.create_all(bind=engine)
+        engine = create_engine(get_db_string(), echo=echo)
 
         Session = sessionmaker(bind=engine)
 
