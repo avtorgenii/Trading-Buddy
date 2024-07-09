@@ -1,4 +1,3 @@
-import faulthandler
 import os.path
 from sqlalchemy import create_engine, Column, String, Integer, LargeBinary, URL, Float, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -210,8 +209,10 @@ class Trade(Base):
 
 
 def get_db_string():
-    if os.getenv("DATABASE_URL") is None:
-        return "sqlite:///trading.db"
+    if os.getenv("SITE_URL") is None:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        return f"sqlite:///{os.path.join(base_dir, 'trading.db')}"
     else:
         connection_string = URL.create(
             'postgresql',

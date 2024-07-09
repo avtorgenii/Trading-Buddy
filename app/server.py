@@ -41,6 +41,8 @@ def create_price_listener_for_tool(tool):
 
     listeners_threads[tool] = [price_listener_thread, p_listener]
 
+    print("PRICE LISTENER STARTED")
+
 
 def delete_price_listener_for_tool(tool):
     try:

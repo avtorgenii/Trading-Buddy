@@ -70,18 +70,20 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
 
 
 def stop_price_listener(tool: str):
-    port = int(getenv("PORT", 8080))
-    base_url = os.getenv("SITE_URL", f"http://127.0.0.1:{port}")
-    route = "/stop-price-listener/"
-    url = base_url + route
+    # port = int(getenv("PORT", 8080))
+    # base_url = os.getenv("SITE_URL", f"http://127.0.0.1:{port}")
+    # route = "/stop-price-listener/"
+    # url = base_url + route
+    #
+    # cancel_data = {"tool": tool}
+    # response = requests.post(url, json=cancel_data)
+    #
+    # if response.status_code == 200:
+    #     print("Price listener stopped successfully:", response.json())
+    # else:
+    #     print(f"Error stopping price listener: {response.status_code}, {response.json()}")
 
-    cancel_data = {"tool": tool}
-    response = requests.post(url, json=cancel_data)
-
-    if response.status_code == 200:
-        print("Price listener stopped successfully:", response.json())
-    else:
-        print(f"Error stopping price listener: {response.status_code}, {response.json()}")
+    pass
 
 
 def close_position(tool):

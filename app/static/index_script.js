@@ -63,10 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
     toolSelect.addEventListener('change', checkAndSubmit);
 
     function checkAndSubmit() {
-        const takes = Array.from(takeInputs).map(input => parseFloat(input.value));
+        const takes = Array.from(takeInputs).map(input => parseFloat(input.value.replace(",", ".")));
         const stoe = parseInt(stoeInput.value);
-        const stopPrice = parseFloat(stopPriceInput.value);
-        const entryPrice = parseFloat(entryPriceInput.value);
+        const stopPrice = parseFloat(stopPriceInput.value.replace(",", "."));
+        const entryPrice = parseFloat(entryPriceInput.value.replace(",", "."));
         const leverage = parseInt(leverageInput.value);
         const tool = toolSelect.value;
 
@@ -133,23 +133,17 @@ toggleRemoveButton();
 toggleStopToEntryForm();
 
 
-document.getElementById('entryp').addEventListener('blur', function () {
-    updateEntryFormState();
-});
-
-document.getElementById('stopp').addEventListener('blur', function () {
-    updateEntryFormState();
-});
-
-
-
 function updateEntryFormState() {
-    const stopPrice = parseFloat(document.getElementById('stopp').value);
-    const entryPrice = parseFloat(document.getElementById('entryp').value);
+    const stopPriceInput = document.getElementById('stopp').value.replace(",", ".");
+    const entryPriceInput = document.getElementById('entryp').value.replace(",", ".");
+    const stopPrice = parseFloat(stopPriceInput);
+    const entryPrice = parseFloat(entryPriceInput);
     const button = document.getElementById('opent');
     const tradeInfo = document.getElementById('tradeinfo');
     const leverageInput = document.getElementById('leverage');
     const tool = document.getElementById('tool').value;
+
+    console.log('stopPrice:', stopPrice, 'entryPrice:', entryPrice); // Debugging logs
 
     function fetchMaxLeverage(tool, callback) {
         fetch('/set-default-leverage/', {
@@ -166,7 +160,7 @@ function updateEntryFormState() {
                 return response.json();
             })
             .then(data => {
-                callback(data.max_leverage)
+                callback(data.max_leverage);
             })
             .catch(error => {
                 console.error('There was a problem with the fetch operation:', error);
@@ -225,17 +219,32 @@ function updateEntryFormState() {
     }
 }
 
+// Event listeners for blur and input events
+const entryInput = document.getElementById('entryp');
+const stopInput = document.getElementById('stopp');
+
+function attachEvents(input) {
+    input.addEventListener('blur', updateEntryFormState);
+    input.addEventListener('change', updateEntryFormState);
+    input.addEventListener('touchend', updateEntryFormState);
+    input.addEventListener('input', updateEntryFormState); // For immediate feedback
+}
+
+attachEvents(entryInput);
+attachEvents(stopInput);
 
 // Initial call to set the correct state of the button
 updateEntryFormState();
 
+
+
 // Account Config
 function saveAccountData() {
     const riskText = document.getElementById('risk-value');
-    const risk = parseFloat(document.getElementById('newRisk').value);
+    const risk = parseFloat(document.getElementById('newRisk').value.replace(",", "."));
 
     const depositText = document.getElementById('deposit-value');
-    const deposit = parseFloat(document.getElementById('newDeposit').value);
+    const deposit = parseFloat(document.getElementById('newDeposit').value.replace(",", "."));
 
 
     if (!isNaN(risk) && !isNaN(deposit)) {
@@ -280,9 +289,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     opentButton.addEventListener('click', function () {
         const tool = document.getElementById('tool').value;
-        const entryPrice = parseFloat(document.getElementById('entryp').value);
-        const triggerPrice = parseFloat(document.getElementById('triggerp').value);
-        const stopPrice = parseFloat(document.getElementById('stopp').value);
+        const entryPrice = parseFloat(document.getElementById('entryp').value.replace(",", "."));
+        const triggerPrice = parseFloat(document.getElementById('triggerp').value.replace(",", "."));
+        const stopPrice = parseFloat(document.getElementById('stopp').value.replace(",", "."));
         const leverage = parseInt(document.getElementById('leverage').value);
         const stoe = parseInt(document.getElementById('stoe').value);
         const volume = parseFloat(document.getElementById('volume-value').textContent);  // Changed from value to textContent
@@ -336,13 +345,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!isNaN(manualVolume)) {
             const tool = document.getElementById('tool').value;
-            const entryPrice = parseFloat(document.getElementById('entryp').value);
-            const triggerPrice = parseFloat(document.getElementById('triggerp').value);
-            const stopPrice = parseFloat(document.getElementById('stopp').value);
+            const entryPrice = parseFloat(document.getElementById('entryp').value.replace(",", "."));
+            const triggerPrice = parseFloat(document.getElementById('triggerp').value.replace(",", "."));
+            const stopPrice = parseFloat(document.getElementById('stopp').value.replace(",", "."));
             const leverage = parseInt(document.getElementById('leverage').value);
             const stoe = parseInt(document.getElementById('stoe').value);
             const takeInputs = document.querySelectorAll('#form-container input[id^="takep"]');
-            const takes = Array.from(takeInputs).map(input => parseFloat(input.value));
+            const takes = Array.from(takeInputs).map(input => parseFloat(input.value.replace(",", ".")));
 
             const data = {
                 tool: tool,
@@ -454,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData(form);
 
         // Explicitly add the tool information
-        formData.set('tool', document.getElementById('cancelationTool').value);
+        formData.set('tool', document.getElementById('cancelationTool').value.replace(",", "."));
 
         const data = Object.fromEntries(formData.entries());
 
