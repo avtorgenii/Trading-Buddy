@@ -68,7 +68,7 @@ class OrderListener(Listener):
 
     def run_scheduler(self):
         print(self.listen_key)
-        schedule.every(30).minutes.do(self.extend_listen_key_validity)
+        schedule.every(15).minutes.do(self.extend_listen_key_validity)
 
     def __init__(self):
         super().__init__()
