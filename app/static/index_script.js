@@ -227,7 +227,6 @@ function attachEvents(input) {
     input.addEventListener('blur', updateEntryFormState);
     input.addEventListener('change', updateEntryFormState);
     input.addEventListener('touchend', updateEntryFormState);
-    input.addEventListener('input', updateEntryFormState); // For immediate feedback
 }
 
 attachEvents(entryInput);
@@ -298,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Get all take prices
         const takeInputs = document.querySelectorAll('#form-container input[id^="takep"]');
-        const takes = Array.from(takeInputs).map(input => parseFloat(input.value));
+        const takes = Array.from(takeInputs).map(input => parseFloat(input.value.replace(",", ".")));
 
         const data = {
             tool: tool,

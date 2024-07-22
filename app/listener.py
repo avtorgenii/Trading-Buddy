@@ -130,6 +130,7 @@ class OrderListener(Listener):
             be.place_stop_loss_order(tool, stop, volume, pos_side)
 
             # Placing take-profits
+            print(f"PLACING TAKE PROFITS: {takes}, {volume}")
             be.place_take_profit_orders(tool, takes, volume, pos_side)
 
             # Stopping price listener
