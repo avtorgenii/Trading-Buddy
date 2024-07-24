@@ -209,21 +209,24 @@ class Trade(Base):
 
 
 def get_db_string():
-    if os.getenv("SITE_URL") is None:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+    # if os.getenv("SITE_URL") is None:
+    #     base_dir = os.path.dirname(os.path.abspath(__file__))
+    #
+    #     return f"sqlite:///{os.path.join(base_dir, 'trading.db')}"
+    # else:
+    #     connection_string = URL.create(
+    #         'postgresql',
+    #         username='trading_owner',
+    #         password='5Ta2IvJDoZLS',
+    #         host='ep-misty-union-a2p06y27-pooler.eu-central-1.aws.neon.tech',
+    #         database='trading',
+    #         query={'sslmode': 'require', 'options': 'endpoint=ep-misty-union-a2p06y27-pooler'}
+    #     )
+    #
+    #     return connection_string
 
-        return f"sqlite:///{os.path.join(base_dir, 'trading.db')}"
-    else:
-        connection_string = URL.create(
-            'postgresql',
-            username='trading_owner',
-            password='5Ta2IvJDoZLS',
-            host='ep-misty-union-a2p06y27.eu-central-1.aws.neon.tech',
-            database='trading',
-            query={'sslmode': 'require', 'options': 'endpoint=ep-misty-union-a2p06y27'}
-        )
-
-        return connection_string
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return f"sqlite:///{os.path.join(base_dir, 'trading.db?timeout=30.0')}"
 
 
 def create_db(echo=False):

@@ -1,13 +1,23 @@
+import threading
 from datetime import datetime
 from typing import List
 
+import schedule
+
 from app.db_creator import (Account, Trade, Tool, get_db_string)
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 
 class DBInterface:
+    def keep_alive(self):
+        print("DB IS ALIVE")
+        self.session.execute(text('SELECT 1'))
+
+    def run_keeping_alive(self):
+        schedule.every(1).minute.do(self.keep_alive)
+
     def __init__(self, account_name, echo=False):
         self.account_name = account_name
 
@@ -16,6 +26,8 @@ class DBInterface:
         Session = sessionmaker(bind=engine)
 
         self.session = Session()
+
+        threading.Thread(target=self.run_keeping_alive).start()
 
     def __del__(self):
         self.session.close()

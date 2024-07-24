@@ -3,8 +3,6 @@ __pycache__/
 
 Learning/
 
-app/trading.db
-
 .git
 
 *.env

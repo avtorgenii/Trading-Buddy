@@ -68,7 +68,7 @@ class OrderListener(Listener):
 
     def run_scheduler(self):
         print(self.listen_key)
-        schedule.every(15).minutes.do(self.extend_listen_key_validity)
+        schedule.every(7).minutes.do(self.extend_listen_key_validity)
 
     def __init__(self):
         super().__init__()
@@ -206,7 +206,7 @@ class OrderListener(Listener):
                 tool, order_type, volume, avg_price, status, pnl, commission = self.extract_info_from_utf_data(
                     utf8_data)
 
-                print(f"DATA FOR NEW                       ORDERRRRRRRRRRRRRRRRRRR: {utf8_data}")
+                print(f"DATA FOR NEW ORDER: {utf8_data}")
 
                 if order_type == "TRIGGER_LIMIT" or order_type == "LIMIT":
                     if status == "FILLED":
@@ -222,6 +222,14 @@ class OrderListener(Listener):
                 elif order_type == "TAKE_PROFIT_MARKET":
                     if status == "PARTIALLY_FILLED" or status == "FILLED":
                         self.on_take_profit(tool, volume, pnl, commission, status)
+
+    def on_close(self, ws, close_status_code, close_msg):
+        super().on_close(ws, close_status_code, close_msg)
+
+        print("OrderListener: Restarting Connection...")
+
+        new_listener = OrderListener()
+        new_listener.listen_for_events()
 
     def listen_for_events(self):
         self.ws = websocket.WebSocketApp(
