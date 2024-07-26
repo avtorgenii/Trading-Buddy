@@ -11,7 +11,7 @@ from app.db_manager import DBInterface
 File Template:
 {
     tool: {
-        entry_p: ,
+        entry_p:
         stop_P:
         take_ps: [],
         pos_side: ,
@@ -23,10 +23,11 @@ File Template:
         breakeven: ,# True if stop-loss is moved nearby entry, False if not
         pnl: ,
         commission: 
-        start_time: # CANNOT BE MODIFIED OUTSIDE
+        start_time: 
         leverage: ,
         trigger_p: ,
         cancel_levels: [] # First is for overhigh/overlow, second is for take-profit level
+        fill_history: [[avg_price, volume], [..., ...]] - # For calculating result entry_p for cases with partial_filling of position
     },
 }
 """
@@ -60,7 +61,7 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
                     'move_stop_after': move_stop_after, 'current_volume': 0.0,
                     'left_volume_to_fill': primary_volume, 'primary_volume': primary_volume,
                     'last_status': "NEW", 'breakeven': False, 'pnl': 0.0, 'commission': 0.0, 'leverage': leverage,
-                    'trigger_p': trigger_p, 'cancel_levels': [], 'start_time': int(time.time())}
+                    'trigger_p': trigger_p, 'cancel_levels': [], 'start_time': int(time.time()), 'fill_history': []}
 
     put_data(orders)
 
@@ -127,6 +128,22 @@ def cancel_position(tool):
     stop_price_listener(tool)
 
 
+def get_entry_price_for_position(tool):
+    history, = get_info_for_position(tool, ['fill_history'])
+
+    res_price = 0
+    total_volume = 0
+
+    for fill in history:
+        avg_price, volume = fill
+
+        total_volume += volume
+
+        res_price += avg_price * volume
+
+    return res_price / total_volume
+
+
 def update_info_for_position(tool, **kwargs):
     """
     Update information for a specific order identified by the tool.
@@ -139,7 +156,6 @@ def update_info_for_position(tool, **kwargs):
 
     primary_order_id: {
         tool (str): The name of the tool.
-        entry_p (float): The entry price.
         stop (float): Stop-loss leveL.
         takes (list of floats): A list of take profit levels.
         pos_side (str): The position side (e.g., 'LONG' or 'SHORT').
@@ -152,6 +168,7 @@ def update_info_for_position(tool, **kwargs):
         pnl (float): Total current realized pnl of position
         commission (float): Total current commission of position
         cancel_levels (List[float]): Overhigh/overlow and take-profit value for cancelation of order
+        fill_history (List[List[float]]): [[avg_price, volume], [..., ...]] - # For calculating result entry_p for cases with partial_filling of position
     }
 
     Example:
@@ -186,7 +203,6 @@ def get_info_for_position(tool, desired_params):
 
     primary_order_id: {
         tool (str): The name of the tool.
-        entry_p (float): The entry price.
         stop (float): Stop-loss leveL.
         takes (list of floats): A list of take profit levels.
         pos_side (str): The position side (e.g., 'LONG' or 'SHORT').
@@ -201,6 +217,7 @@ def get_info_for_position(tool, desired_params):
         start_time (float): Start time in unix
         leverage (int):
         trigger_p (float):
+        fill_history (List[List[float]]): [[avg_price, volume], [..., ...]] - # For calculating result entry_p for cases with partial_filling of position
     }
 
     Example:

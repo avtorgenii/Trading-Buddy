@@ -1,1 +1,28 @@
-{}
+{
+    "FTM-USDT": {
+        "entry_p": 0.46,
+        "stop_p": 0.333,
+        "take_ps": [
+            0.555
+        ],
+        "pos_side": "LONG",
+        "move_stop_after": 1,
+        "current_volume": 4.0,
+        "left_volume_to_fill": 0.0,
+        "primary_volume": 4.0,
+        "last_status": "FILLED",
+        "breakeven": false,
+        "pnl": 0.0,
+        "commission": -0.0009024,
+        "leverage": 75,
+        "trigger_p": 0.0,
+        "cancel_levels": [],
+        "start_time": 1721988439,
+        "fill_history": [
+            [
+                0.4512,
+                4.0
+            ]
+        ]
+    }
+}

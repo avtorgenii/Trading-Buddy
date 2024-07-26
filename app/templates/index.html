@@ -301,7 +301,7 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-6">
-                                <p class="text-success">{{ position.pos_side }}</p>
+                                <p class="{% if position.pos_side|lower == 'short' %}text-danger{% else %}text-success{% endif %}">{{ position.pos_side }}</p>
                             </div>
                             <div class="col-6">
                                 <p>{{ position.leverage }}X</p>
@@ -367,7 +367,7 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-6">
-                                <p class="text-success">{{ position.pos_side }}</p>
+                                <p class="{% if position.pos_side|lower == 'short' %}text-danger{% else %}text-success{% endif %}">{{ position.pos_side }}</p>
                             </div>
                             <div class="col-6">
                                 <p>{{ position.leverage }}X</p>

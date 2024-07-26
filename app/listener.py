@@ -98,63 +98,90 @@ class OrderListener(Listener):
 
         return tool, order_type, volume, avg_price, status, pnl, commission
 
+    def place_takes_and_stops(self, tool, volume):
+        pos_side, takes, stop, ls = rm.get_info_for_position(tool, ['pos_side', 'take_ps', 'stop_p', 'last_status'])
+
+        print(f"READ TAKES AND STOP:                             {takes}, {stop}")
+
+        print(f"LAST                    STATUS OF           POSITION IS NOW: {ls}")
+
+        # Placing stop-loss
+        be.place_stop_loss_order(tool, stop, volume, pos_side)
+
+        # Placing take-profits
+        print(f"PLACING TAKE PROFITS: {takes}, {volume}")
+        be.place_take_profit_orders(tool, takes, volume, pos_side)
+
+        # Stopping price listener
+        rm.stop_price_listener(tool)
+
+    def cancel_takes_and_stops(self, tool):
+        be.cancel_stop_loss_for_tool(tool)
+        be.cancel_take_profits_for_tool(tool)
+
     def on_fill_primary_order(self, tool, avg_price, volume, new_commission):
         print(f"{self.__class__.__name__}: ORDER IS FILLED")
 
         # It seems like because program use multi-threaded, runtime_manager can't finish writing data into json in
         # add_position() function when order is immediately filled up after its placing, so we've gotta to pause a
         # bit this function so rm would finish its business
-        time.sleep(1)
+        time.sleep(3)
 
-        left_volume_to_fill, commission, last_status = rm.get_info_for_position(tool,
+        left_volume_to_fill, commission, last_status, fill_history = rm.get_info_for_position(tool,
                                                                                 ['left_volume_to_fill', 'commission',
-                                                                                 'last_status'])
+                                                                                 'last_status', 'fill_history'])
 
         if last_status == "PARTIALLY_FILLED":
-            # If order was previously almost filled - call partial fill func once again
+            # If order was previously partially filled - call partial fill func once again
             self.on_partial_fill_primary_order(tool, avg_price, volume, new_commission)
         else:
 
             print(f"LEFT VOLUME TO FILL: {left_volume_to_fill}")
 
-            rm.update_info_for_position(tool, entry_p=avg_price, left_volume_to_fill=left_volume_to_fill - volume,
+            fill_history.append([avg_price, volume])
+
+            rm.update_info_for_position(tool, left_volume_to_fill=left_volume_to_fill - volume,
                                         last_status="FILLED",
                                         current_volume=volume, commission=commission + new_commission,
-                                        start_time=int(time.time()))
+                                        start_time=int(time.time()), fill_history=fill_history)
 
-            pos_side, takes, stop, ls = rm.get_info_for_position(tool, ['pos_side', 'take_ps', 'stop_p', 'last_status'])
-
-            print(f"LAST                    STATUS OF           POSITION IS NOW: {ls}")
-
-            # Placing stop-loss
-            be.place_stop_loss_order(tool, stop, volume, pos_side)
-
-            # Placing take-profits
-            print(f"PLACING TAKE PROFITS: {takes}, {volume}")
-            be.place_take_profit_orders(tool, takes, volume, pos_side)
-
-            # Stopping price listener
-            rm.stop_price_listener(tool)
+            self.place_takes_and_stops(tool, volume)
 
     def on_partial_fill_primary_order(self, tool, avg_price, volume, new_commission):
-        # Should send notification for control from my side, as maybe some mistakes here due to rareness
-        # of this status
-
-        # IN PROGRESS... DOESN'T WORK YET
-
         print(f"{self.__class__.__name__}: ORDER IS PARTIALLY FILLED")
 
-        # It seems like because program use multi-threaded, runtime_manager can't finish writing data into json in
+        # It seems like because program is multi-threaded, runtime_manager can't finish writing data into json in
         # add_position() function when order is immediately filled up after its placing, so we got to pause a
         # bit this function so rm would finish its business
-        time.sleep(1)
+        time.sleep(3)
 
-        # Set start_time only if it wasn't set yet
-        left_volume_to_fill, start_time, commission = rm.get_info_for_position(tool,
-                                                                               ['left_volume_to_fill', 'start_time',
-                                                                                'commission'])
+        left_volume_to_fill, last_status, commission, current_volume, fill_history = rm.get_info_for_position(tool,
+                                                                                                ['left_volume_to_fill',
+                                                                                                 'last_status',
+                                                                                                 'commission',
+                                                                                                 'current_volume',
+                                                                                                 'fill_history'])
 
-        rm.update_info_for_position(tool, commission=commission + new_commission, last_status="PARTIALLY_FILLED")
+        current_volume += volume
+        left_volume_to_fill -= volume
+        fill_history.append([avg_price, current_volume])
+
+        rm.update_info_for_position(tool, current_volume=current_volume, left_volume_to_fill=left_volume_to_fill,
+                                    fill_history=fill_history)
+
+        if last_status == "NEW":
+            # Set start_time only if it wasn't set yet
+            rm.update_info_for_position(tool, start_time=int(time.time()))
+
+            self.place_takes_and_stops(tool, volume)
+
+        elif last_status == "PARTIALLY_FILLED":
+            self.cancel_takes_and_stops(tool)
+
+            self.place_takes_and_stops(tool, current_volume)
+
+        rm.update_info_for_position(tool, commission=commission + new_commission,
+                                    last_status="PARTIALLY_FILLED" if left_volume_to_fill != 0 else "FILLED")
 
         # Stopping price listener
         rm.stop_price_listener(tool)
@@ -169,9 +196,12 @@ class OrderListener(Listener):
         print(f"{self.__class__.__name__}: FILLING TAKE_PROFIT")
 
         # Cancel previous stop-loss and place new if stop-loss wasn't moved yet
-        breakeven, pnl, commission = rm.get_info_for_position(tool, ['breakeven', 'pnl', 'commission'])
+        breakeven, pnl, commission, last_status = rm.get_info_for_position(tool, ['breakeven', 'pnl', 'commission', 'last_status'])
 
         rm.update_info_for_position(tool, pnl=pnl + new_pnl, commission=commission + new_commission)
+
+        if last_status == "PARTIALLY_FILLED":
+            be.cancel_primary_order_for_tool(tool, only_cancel=True)
 
         if not breakeven:
             # Decreasing volume for new stop-loss as take-profit already fixed some volume of position
@@ -189,7 +219,7 @@ class OrderListener(Listener):
                 if move_stop_after == 1:
                     be.cancel_stop_loss_for_tool(tool)
 
-                    entry_p, = rm.get_info_for_position(tool, ['entry_p'])
+                    entry_p = rm.get_entry_price_for_position(tool)
 
                     be.place_stop_loss_order(tool, entry_p, volume_for_stop_loss, pos_side)
                     rm.update_info_for_position(tool, move_stop_after=move_stop_after - 1, breakeven=True)

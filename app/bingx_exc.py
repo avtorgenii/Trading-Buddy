@@ -144,7 +144,22 @@ def cancel_stop_loss_for_tool(tool):
     print(f"STOP ORDER CANCELLATION RESPONSE: {resp}")
 
 
-def cancel_primary_order_for_tool(tool, save_to_db=False):
+def cancel_take_profits_for_tool(tool):
+    orders = get_orders_for_tool(tool)
+
+    print(orders)
+
+    take_orders = orders['takes']
+
+    for take_order in take_orders:
+        take_order_id = take_order['orderId']
+
+        resp = client.trade.cancel_order(take_order_id, tool)
+
+        print(f"TAKE ORDER CANCELLATION RESPONSE: {resp}")
+
+
+def cancel_primary_order_for_tool(tool, save_to_db=False, only_cancel=False):
     orders = get_orders_for_tool(tool)
 
     print(orders)
@@ -153,14 +168,13 @@ def cancel_primary_order_for_tool(tool, save_to_db=False):
 
     resp = client.trade.cancel_order(entry_order_id, tool)
 
-    print(f"SAVE TO DB: {save_to_db}")
-
-    if save_to_db:
-        rm.close_position(tool)
-    else:
-        rm.cancel_position(tool)
-
     print(f"PRIMARY ORDER CANCELLATION RESPONSE: {resp}")
+
+    if not only_cancel:
+        if save_to_db:
+            rm.close_position(tool)
+        else:
+            rm.cancel_position(tool)
 
 
 def place_take_profit_orders(tool, take_profits, cum_volume, pos_side):
