@@ -487,12 +487,13 @@
                     <form id="cancelLevelsForm">
                         <div class="mb-3">
                             <label for="over" class="form-label">Overhigh or Overlow:</label>
-                            <input type="number" class="form-control" id="over" name="over" required>
+                            <input type="number" class="form-control" id="over" name="over" required value="0"
+                                inputmode="decimal" pattern="[0-9.,]*">
                         </div>
                         <div class="mb-3">
                             <label for="take" class="form-label">Take-profit:</label>
-                            <input type="number" class="form-control" id="take" name="take"
-                                value="{{ some_default_value }}" required>
+                            <input type="number" class="form-control" id="take" name="take" required value="0"
+                                inputmode="decimal" pattern="[0-9.,]*">
                         </div>
                         <input type="hidden" id="cancelationTool" name="tool">
                     </form>
