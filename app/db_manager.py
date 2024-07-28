@@ -57,6 +57,20 @@ class DBInterface:
     def get_all_tools(self):
         return [tool.tool_name for tool in self.session.query(Tool).all()]
 
+    def add_new_tool(self, tool_name, starred):
+        try:
+            self.session.add(Tool(tool_name=tool_name, starred=starred))
+            self.session.commit()
+        except Exception as e:
+            print(e)
+
+    def remove_tool(self, tool_name):
+        tool = self.session.query(Tool).filter_by(tool_name=tool_name).first()
+
+        if tool:
+            self.session.delete(tool)
+            self.session.commit()
+
     def get_all_trades(self):
         return self.session.query(Trade).order_by(Trade.trade_id.desc()).all()
 
@@ -79,6 +93,13 @@ class DBInterface:
 
         if last_trade:
             self.session.delete(last_trade)
+            self.session.commit()
+
+    def remove_trade(self, trade_id):
+        trade = self.session.query(Trade).filter_by(trade_id=trade_id).first()
+
+        if trade:
+            self.session.delete(trade)
             self.session.commit()
 
     def get_info_for_trade(self, trade_id, params: List[str]):
@@ -194,3 +215,7 @@ class DBInterface:
             return datetime.fromisoformat(value)
         else:
             return value
+
+
+if __name__ == "__main__":
+    manager = DBInterface("BingX")

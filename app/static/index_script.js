@@ -236,6 +236,50 @@ attachEvents(stopInput);
 updateEntryFormState();
 
 
+// Adding/Removing tools
+document.getElementById('saveAddTool').addEventListener('click', function() {
+            const toolName = document.getElementById('toolName').value;
+            const starred = document.getElementById('starred').checked;
+
+            if (toolName) {
+                fetch('/add-new-tool/', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tool_name: toolName, starred: starred })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload()
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+
+        document.getElementById('saveRemoveTool').addEventListener('click', function() {
+            const toolName = document.getElementById('removeToolName').value;
+
+            if (toolName) {
+                fetch('/remove-tool/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tool_name: toolName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload()
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+
 
 // Account Config
 function saveAccountData() {

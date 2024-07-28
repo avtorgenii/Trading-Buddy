@@ -54,10 +54,10 @@
             <div class="collapse navbar-collapse justify-content-end align-center" id="main-nav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a href="#cpos" class="nav-link lead">Current Positions</a>
+                        <a href="#addToolModal" class="nav-link lead" data-bs-toggle="modal">Add New Tool</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#ppos" class="nav-link lead">Pending Positions</a>
+                        <a href="#removeToolModal" class="nav-link lead" data-bs-toggle="modal">Remove Tool</a>
                     </li>
                     <li class="nav-item d-none d-lg-block">
                         <a href="/journal" class="nav-link lead">Trading Journal</a>
@@ -71,6 +71,58 @@
 
         </div>
     </nav>
+
+    <!-- Add Tool Modal -->
+    <div class="modal fade" id="addToolModal" tabindex="-1" aria-labelledby="addToolModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addToolModalLabel">Add New Tool</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addToolForm">
+                        <div class="mb-3">
+                            <label for="toolName" class="form-label">Tool Name:</label>
+                            <input type="text" class="form-control" id="toolName" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="starred">
+                            <label class="form-check-label" for="starred">Starred</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveAddTool" data-bs-dismiss="modal">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Tool Modal -->
+    <div class="modal fade" id="removeToolModal" tabindex="-1" aria-labelledby="removeToolModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeToolModalLabel">Remove Tool</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="removeToolForm">
+                        <div class="mb-3">
+                            <label for="removeToolName" class="form-label">Tool Name:</label>
+                            <input type="text" class="form-control" id="removeToolName" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="saveRemoveTool" data-bs-dismiss="modal">Remove</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Account Configure Modal -->
     <div class="modal fade" id="riskModal" tabindex="-1" aria-labelledby="riskModalLabel" aria-hidden="true">

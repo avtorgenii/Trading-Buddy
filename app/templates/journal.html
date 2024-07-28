@@ -54,15 +54,48 @@
 <body>
 
     <!--Navbar-->
-    <nav class="navbar navbar-expand-md navbar-light bg-light fixed-top">
+    <nav class="navbar navbar-expand-md navbar-light bg-white fixed-top">
         <div class="container-xxl">
             <a href="/" class="navbar-brand">
                 <span class="fw-bold text-primary display-5">
                     Trading Buddy
                 </span>
             </a>
+
+            <!-- Navbar links-->
+            <div class="collapse navbar-collapse justify-content-end align-center" id="main-nav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a href="#removeTradeModal" class="nav-link lead fs-3" data-bs-toggle="modal">Remove Trade</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
+
+    <!-- Remove Trade Modal -->
+    <div class="modal fade" id="removeTradeModal" tabindex="-1" aria-labelledby="removeTradeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeTradeModalLabel">Remove Trade</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="removeToolForm">
+                        <div class="mb-3">
+                            <label for="removeTradeId" class="form-label">Trade Id:</label>
+                            <input type="text" class="form-control" id="removeTradeId" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="saveRemoveTrade" data-bs-dismiss="modal">Remove</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!--Trading Journal-->
     <section id="journal" class="d-none d-sm-block">

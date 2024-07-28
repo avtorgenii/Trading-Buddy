@@ -196,3 +196,24 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// Removing Trade
+document.getElementById('saveRemoveTrade').addEventListener('click', function() {
+            const tradeId = document.getElementById('removeTradeId').value;
+
+            if (tradeId) {
+                fetch('/remove-trade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ trade_id: tradeId})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload()
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+});

@@ -258,6 +258,34 @@ async def update_trade_screens(
     return {"message": "Trade updated successfully"}
 
 
+class NewTool(BaseModel):
+    tool_name: str
+    starred: bool
+
+
+@app.put("/add-new-tool/")
+def add_new_tool(new_tool: NewTool):
+    tool_name = new_tool.tool_name
+    starred = new_tool.starred
+    db_interface.add_new_tool(tool_name, starred)
+
+    return {"message": "New tool added successfully"}
+
+
+@app.post("/remove-tool/")
+def remove_tool(data: dict):
+    db_interface.remove_tool(data["tool_name"])
+
+    return {"message": "Tool removed successfully"}
+
+
+@app.post("/remove-trade/")
+def remove_trade(data: dict):
+    db_interface.remove_trade(data["trade_id"])
+
+    return {"message": f"Trade {data["trade_id"]} removed successfully"}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     deposit, risk, unrealized_pnl, available_margin = be.get_account_details()
