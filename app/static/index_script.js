@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     location.reload();
                 })
                 .catch(error => {
-                    console.error('Error cancelling trade:', error);
+                    console.error('Error cancelling trade: ', error);
                     alert('Error cancelling trade');
                 });
         });
