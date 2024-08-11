@@ -261,6 +261,8 @@ class OrderListener(Listener):
         new_listener = OrderListener()
         new_listener.listen_for_events()
 
+        del self
+
     def listen_for_events(self):
         self.ws = websocket.WebSocketApp(
             self.ws_url,
