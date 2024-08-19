@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from app.db_manager import DBInterface
 from app import runtime_manager as rm
 from app import bingx_exc as be
-from app.listener import OrderListener, PriceListener
+from app.listener import OrderListenerManager, PriceListener
 
 app = FastAPI()
 
@@ -315,8 +315,7 @@ async def read_journal(request: Request):
 
 
 def start_listener():
-    listener = OrderListener()
-    listener.listen_for_events()
+    order_listener_manager = OrderListenerManager()
 
 
 # Starting orders listener

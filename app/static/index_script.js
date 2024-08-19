@@ -260,7 +260,7 @@ document.getElementById('saveAddTool').addEventListener('click', function() {
         });
 
         document.getElementById('saveRemoveTool').addEventListener('click', function() {
-            const toolName = document.getElementById('removeToolName').value;
+            const toolName = document.getElementById('remove_tool').value;
 
             if (toolName) {
                 fetch('/remove-tool/', {

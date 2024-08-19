@@ -68,17 +68,21 @@ class OrderListener(Listener):
 
     def run_scheduler(self):
         print(self.listen_key)
-        schedule.every(7).minutes.do(self.extend_listen_key_validity)
+        job = schedule.every(7).minutes.do(self.extend_listen_key_validity)
+        self.scheduled_jobs.append(job)
 
-    def __init__(self):
+    def __init__(self, manager):
         super().__init__()
 
         self.other = Other(api_key=self.API_KEY, secret_key=self.SECRET_KEY)
+
+        self.manager = manager
 
         listen_key_response = self.other.generate_listen_key()
         self.listen_key = listen_key_response['listenKey']
         self.ws_url = f"wss://open-api-swap.bingx.com/swap-market?listenKey={self.listen_key}"
 
+        self.scheduled_jobs = []
         self.run_scheduler()
 
         self.ws = None
@@ -128,8 +132,10 @@ class OrderListener(Listener):
         time.sleep(3)
 
         left_volume_to_fill, commission, last_status, fill_history = rm.get_info_for_position(tool,
-                                                                                ['left_volume_to_fill', 'commission',
-                                                                                 'last_status', 'fill_history'])
+                                                                                              ['left_volume_to_fill',
+                                                                                               'commission',
+                                                                                               'last_status',
+                                                                                               'fill_history'])
 
         if last_status == "PARTIALLY_FILLED":
             # If order was previously partially filled - call partial fill func once again
@@ -156,11 +162,12 @@ class OrderListener(Listener):
         time.sleep(3)
 
         left_volume_to_fill, last_status, commission, current_volume, fill_history = rm.get_info_for_position(tool,
-                                                                                                ['left_volume_to_fill',
-                                                                                                 'last_status',
-                                                                                                 'commission',
-                                                                                                 'current_volume',
-                                                                                                 'fill_history'])
+                                                                                                              [
+                                                                                                                  'left_volume_to_fill',
+                                                                                                                  'last_status',
+                                                                                                                  'commission',
+                                                                                                                  'current_volume',
+                                                                                                                  'fill_history'])
 
         current_volume += volume
         left_volume_to_fill -= volume
@@ -196,7 +203,8 @@ class OrderListener(Listener):
         print(f"{self.__class__.__name__}: FILLING TAKE_PROFIT")
 
         # Cancel previous stop-loss and place new if stop-loss wasn't moved yet
-        breakeven, pnl, commission, last_status = rm.get_info_for_position(tool, ['breakeven', 'pnl', 'commission', 'last_status'])
+        breakeven, pnl, commission, last_status = rm.get_info_for_position(tool, ['breakeven', 'pnl', 'commission',
+                                                                                  'last_status'])
 
         rm.update_info_for_position(tool, pnl=pnl + new_pnl, commission=commission + new_commission)
 
@@ -256,12 +264,13 @@ class OrderListener(Listener):
     def on_close(self, ws, close_status_code, close_msg):
         super().on_close(ws, close_status_code, close_msg)
 
-        print("OrderListener: Restarting Connection...")
+        print("OrderListener: Deleting listener...")
 
-        new_listener = OrderListener()
-        new_listener.listen_for_events()
+        for job in self.scheduled_jobs:
+            schedule.cancel_job(job)
+        self.scheduled_jobs = []
 
-        del self
+        self.manager.on_close_listener()
 
     def listen_for_events(self):
         self.ws = websocket.WebSocketApp(
@@ -272,6 +281,18 @@ class OrderListener(Listener):
             on_close=self.on_close,
         )
         self.ws.run_forever()
+
+
+class OrderListenerManager:
+    def __init__(self):
+        self.order_listener = OrderListener(self)
+        self.order_listener.listen_for_events()
+
+    def on_close_listener(self):
+        print("OrderListenerManager: Restarting Order Listener...")
+
+        self.order_listener = OrderListener(self)
+        self.order_listener.listen_for_events()
 
 
 class PriceListener(Listener):

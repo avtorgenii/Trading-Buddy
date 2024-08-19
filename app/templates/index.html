@@ -109,12 +109,18 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="removeToolForm">
-                        <div class="mb-3">
-                            <label for="removeToolName" class="form-label">Tool Name:</label>
-                            <input type="text" class="form-control" id="removeToolName" required>
+                   <!--Dropdown Tool Selection-->
+                        <label for="remove_tool" class="form-label">Tool:</label>
+                        <div class="input-group mb-4">
+                            <span class="input-group-text">
+                                <i class="bi bi-currency-bitcoin"></i>
+                            </span>
+                            <select id="remove_tool" class="form-select">
+                                {% for tool in tools %}
+                                <option>{{ tool }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
-                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
