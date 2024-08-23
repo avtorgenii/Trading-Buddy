@@ -48,7 +48,7 @@ def delete_price_listener_for_tool(tool):
     try:
         thread, listener = listeners_threads[tool]
         listener.stop_listening()
-        thread.join()
+        thread.exit()
 
         del listeners_threads[tool]
     except Exception as e:
