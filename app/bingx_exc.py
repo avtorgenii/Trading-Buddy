@@ -1,4 +1,4 @@
-import time
+from os import getenv
 
 from bingX.perpetual.v2 import PerpetualV2
 from bingX.perpetual.v2.types import (Order, OrderType, Side, PositionSide, MarginType)
@@ -8,8 +8,8 @@ from app.db_manager import DBInterface
 from app import math_helper as mh
 from app import runtime_manager as rm
 
-API_KEY = "AEzYQiFHBmaQ4fp0Cp8cMaLBJpG5aYYqcYyhCjFyYFxOHcvsZJYia74D5gp9GQMFxXkuPNsYZj7BqOWWw"
-SECRET_KEY = "tzvUioOq1XLUlbZoXDrV6WustANnx7cdnO7qxHgYHGfKY9R2xKqe7hBigdz9my33gXe0X47h1vjYMPJqxAg"
+API_KEY = getenv("API_KEY", "")
+SECRET_KEY = getenv("SECRET_KEY", "")
 ACCOUNT_NAME = "BingX"
 
 client = PerpetualV2(api_key=API_KEY, secret_key=SECRET_KEY)

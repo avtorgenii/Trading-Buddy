@@ -10,11 +10,13 @@ from bingX.perpetual.v2.other import Other
 from app import runtime_manager as rm
 from app import bingx_exc as be
 
+from os import getenv
+
 
 class Listener:
     def __init__(self):
-        self.API_KEY = "AEzYQiFHBmaQ4fp0Cp8cMaLBJpG5aYYqcYyhCjFyYFxOHcvsZJYia74D5gp9GQMFxXkuPNsYZj7BqOWWw"
-        self.SECRET_KEY = "tzvUioOq1XLUlbZoXDrV6WustANnx7cdnO7qxHgYHGfKY9R2xKqe7hBigdz9my33gXe0X47h1vjYMPJqxAg"
+        self.API_KEY = getenv("API_KEY", "")
+        self.SECRET_KEY = getenv("SECRET_KEY", "")
 
         self.ws_url = "wss://open-api-swap.bingx.com/swap-market"
 

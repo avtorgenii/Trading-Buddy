@@ -6,14 +6,10 @@ COPY . /all
 
 RUN pip install -r requirements.txt
 
-ENV SITE_URL="http://157.230.251.126"
-
 ENV PYTHONPATH=/all
 
-ENV PORT=8080
+EXPOSE ${PORT}
 
-EXPOSE 8080
+ENTRYPOINT ["sh", "bin/start.sh"]
 
 
-
-CMD ["python", "app/main.py"]

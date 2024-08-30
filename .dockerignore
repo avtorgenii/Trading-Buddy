@@ -1,11 +1,5 @@
-env/
 __pycache__/
 
 Learning/
 
 .git
-
-*.env
-*.env.*
-env.*
-

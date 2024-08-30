@@ -34,7 +34,7 @@ File Template:
 
 db_interface = DBInterface("BingX")
 
-POS_PATH = os.getenv("POSITIONS_PATH", "positions.json")
+POS_PATH = "positions.json"
 
 
 def get_data():
