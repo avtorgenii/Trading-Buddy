@@ -109,11 +109,11 @@ def add_screens_to_rows(row_ids, db_session):
     for row_id, screen_name, screen_zoomed_name in zip(row_ids, screen_names, screen_zoomed_names):
         row = db_session.query(Trade).filter_by(trade_id=row_id).first()
         if row:
-            with open(os.path.join(r"C:\Users\ashes\OneDrive\Рабочий стол\Graphic Journal", screen_name), 'rb') as file:
+            with open(os.path.join(r"...", screen_name), 'rb') as file:
                 image_data = file.read()
                 row.screen = image_data
 
-            with open(os.path.join(r"C:\Users\ashes\OneDrive\Рабочий стол\Graphic Journal", screen_zoomed_name),
+            with open(os.path.join(r"...", screen_zoomed_name),
                       'rb') as file:
                 image_data = file.read()
                 row.screen_zoomed = image_data
@@ -209,27 +209,11 @@ class Trade(Base):
 
 
 def get_db_string():
-    # if os.getenv("SITE_URL") is None:
-    #     base_dir = os.path.dirname(os.path.abspath(__file__))
-    #
-    #     return f"sqlite:///{os.path.join(base_dir, 'trading.db')}"
-    # else:
-    #     connection_string = URL.create(
-    #         'postgresql',
-    #         username='trading_owner',
-    #         password='5Ta2IvJDoZLS',
-    #         host='ep-misty-union-a2p06y27-pooler.eu-central-1.aws.neon.tech',
-    #         database='trading',
-    #         query={'sslmode': 'require', 'options': 'endpoint=ep-misty-union-a2p06y27-pooler'}
-    #     )
-    #
-    #     return connection_string
-
     base_dir = os.path.dirname(os.path.abspath(__file__))
     return f"sqlite:///{os.path.join(base_dir, 'trading.db?timeout=30.0')}"
 
 
-def create_db(echo=False):
+def create_db(echo=False, empty_journal=False):
     """
     Delete .db file before firing this func
     """
@@ -241,12 +225,13 @@ def create_db(echo=False):
 
     Base.metadata.create_all(bind=engine)
 
-    csv_to_sql("used/df.csv", session, 90.34, 3)
+    if not empty_journal:
+        csv_to_sql("used/df.csv", session, 90.34, 3)
 
-    add_screens_to_rows(range(137, 147), session)
+        add_screens_to_rows(range(137, 147), session)
 
     session.commit()
 
 
 if __name__ == '__main__':
-    create_db(echo=True)
+    create_db(echo=True, empty_journal=True)
