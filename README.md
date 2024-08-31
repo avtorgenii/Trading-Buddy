@@ -5,6 +5,8 @@ Trading-Buddy is a minimalistic web-client for BingX crypto exchange Peprpetual 
 - Limit/take-profit/stop-loss orders placement and cancelation
 - Track of your trades in Trade Journal
 
+Read RULES_OF_USAGE.txt before using Trading-Buddy
+
 # .env setup
 - Create ```.env``` file in root directory of project and fill it out:
   ```
