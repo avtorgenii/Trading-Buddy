@@ -37,5 +37,5 @@ And run by ```docker run -p <port>:<port> --name trading-buddy <docker_nickname>
 
 Enter ```<ipv4>:<port>``` in browser and enjoy!
 
-# IPhone
+# iPhone
 Frontend of web-app has a configured ```site.webmanifest``` file that makes saved on homescreen site look like an IOS app, definitely check it out
