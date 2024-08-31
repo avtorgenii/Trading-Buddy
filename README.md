@@ -17,7 +17,7 @@ Trading-Buddy is a minimalistic web-client for BingX crypto exchange Peprpetual 
 # Local launching
 After setting up .env file, head to ```main.py``` and run it, web-app will be available at ```127.0.0.1:<port>``` in your browser
 
-# Setup for Deploy to VPS
+# Deploy to VPS
 Trading-Buddy comes with complete Dockerfile that should be used to build your image and deployed to VPS, personally I am using https://digitalocean.com to host web-app.
 I am not providing a link to Image on dockerhub, as for now it requires IP address of VM to be able to send requests to itself from backend, so the image and ```.env``` file should be created by you
 
