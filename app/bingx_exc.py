@@ -110,7 +110,8 @@ def place_open_order(tool, trigger_p, entry_p, stop_p, take_profits, move_stop_a
         print(f"POTENTIAL LOSS OF A TRADE: {pot_loss} \n WITH VOLUME: {volume}")
 
         # Adding primary order info to runtime order book
-        rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume, pot_loss, leverage, trigger_p)
+        rm.add_position(tool, entry_p, stop_p, take_profits, move_stop_after, volume, pot_loss, leverage, trigger_p,
+                        take_profits[0])
 
         return "Primary order placed"
     except ClientError as e:

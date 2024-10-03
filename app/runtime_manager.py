@@ -51,7 +51,7 @@ def put_data(new_positions):
 put_data({})
 
 
-def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume, risk, leverage, trigger_p):
+def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume, risk, leverage, trigger_p, tp_cancel_level):
     orders = get_data()
 
     pos_side = "LONG" if entry_p > stop_p else "SHORT"
@@ -61,7 +61,7 @@ def add_position(tool, entry_p, stop_p, take_ps, move_stop_after, primary_volume
                     'move_stop_after': move_stop_after, 'current_volume': 0.0,
                     'left_volume_to_fill': primary_volume, 'primary_volume': primary_volume,
                     'last_status': "NEW", 'breakeven': False, 'pnl': 0.0, 'commission': 0.0, 'leverage': leverage,
-                    'trigger_p': trigger_p, 'cancel_levels': [], 'start_time': int(time.time()), 'fill_history': []}
+                    'trigger_p': trigger_p, 'cancel_levels': [0, tp_cancel_level], 'start_time': int(time.time()), 'fill_history': []}
 
     put_data(orders)
 

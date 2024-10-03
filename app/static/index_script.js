@@ -55,14 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolSelect = document.getElementById('tool');
 
     // Add event listeners to each input field
-    takeInputs.forEach(input => input.addEventListener('input', checkAndSubmit));
-    stoeInput.addEventListener('input', checkAndSubmit);
-    stopPriceInput.addEventListener('input', checkAndSubmit);
-    entryPriceInput.addEventListener('input', checkAndSubmit);
-    leverageInput.addEventListener('input', checkAndSubmit);
+    takeInputs.forEach(input => input.addEventListener('change', checkAndSubmit));
+    stoeInput.addEventListener('change', checkAndSubmit);
+    stopPriceInput.addEventListener('change', checkAndSubmit);
+    entryPriceInput.addEventListener('change', checkAndSubmit);
+    leverageInput.addEventListener('change', checkAndSubmit);
     toolSelect.addEventListener('change', checkAndSubmit);
 
     function checkAndSubmit() {
+        console.log("Processed Trade Data")
         const takes = Array.from(takeInputs).map(input => parseFloat(input.value.replace(",", ".")));
         const stoe = parseInt(stoeInput.value);
         const stopPrice = parseFloat(stopPriceInput.value.replace(",", "."));
@@ -134,6 +135,7 @@ toggleStopToEntryForm();
 
 
 function updateEntryFormState() {
+    console.log("Updated form state")
     const stopPriceInput = document.getElementById('stopp').value.replace(",", ".");
     const entryPriceInput = document.getElementById('entryp').value.replace(",", ".");
     const stopPrice = parseFloat(stopPriceInput);
@@ -223,14 +225,8 @@ function updateEntryFormState() {
 const entryInput = document.getElementById('entryp');
 const stopInput = document.getElementById('stopp');
 
-function attachEvents(input) {
-    input.addEventListener('blur', updateEntryFormState);
-    input.addEventListener('change', updateEntryFormState);
-    input.addEventListener('touchend', updateEntryFormState);
-}
-
-attachEvents(entryInput);
-attachEvents(stopInput);
+entryInput.addEventListener('change', updateEntryFormState);
+stopInput.addEventListener('change', updateEntryFormState);
 
 // Initial call to set the correct state of the button
 updateEntryFormState();
@@ -491,6 +487,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
             document.getElementById('cancelationTool').value = tool;
 
+            fetch(`/get-cancel-levels/${tool}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update form fields with fetched data
+                document.getElementById('over').value = data.over_level;
+                document.getElementById('take').value = data.take_profit;
+            })
+            .catch(error => {
+                console.error('Error fetching cancel levels:', error);
+            });
+
             // Show the modal
             cancelLevelsModal.show();
         });
@@ -522,11 +534,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error updating cancel levels:', error);
             });
     });
-
-
-
-
-
 
 
 });

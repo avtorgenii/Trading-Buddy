@@ -188,6 +188,13 @@ class CancelPositionLevels(BaseModel):
     take: float
 
 
+@app.get("/get-cancel-levels/{tool}")
+def update_cancel_levels(tool: str):
+    cancel_levels, = rm.get_info_for_position(tool, ["cancel_levels"])
+
+    return {"over_level": cancel_levels[0], "take_profit": cancel_levels[1]}
+
+
 @app.post("/update-cancel-levels/")
 def update_cancel_levels(cancel_levels: CancelPositionLevels):
     tool = cancel_levels.tool
