@@ -7,6 +7,10 @@ Trading-Buddy is a minimalistic web-client for BingX crypto exchange Peprpetual 
 
 Read ```RULES_OF_USAGE.txt``` before using Trading-Buddy
 
+# Showcase 
+
+You can check how web app looks [here](http://165.232.125.83:8079). Though you wouldn't be able see opened positions on exchange site(for this launch app with your own API keys), it should give you idea how does app look like and what it can do
+
 # .env setup
 - Create ```.env``` file in root directory of project and fill it out:
   ```
