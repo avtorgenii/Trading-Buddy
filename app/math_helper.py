@@ -78,7 +78,11 @@ def calculate_position_potential_loss_and_profit(entry_p, stop_p, take_ps, volum
     for exit_price, exit_volume in zip(take_ps, volumes):
         sum_of_weighted_prices += exit_price * exit_volume
 
-    price_of_exit = sum_of_weighted_prices / volume
+    try:
+        price_of_exit = sum_of_weighted_prices / volume
+    except ZeroDivisionError:
+        print("Available volume for position is zero")
+        return 0, 0
 
     pot_profit = abs(entry_p - price_of_exit) * volume
 
