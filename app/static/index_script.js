@@ -1,69 +1,16 @@
-document.getElementById('add-form-button').addEventListener('click', function () {
-    // Get the form container
-    const formContainer = document.getElementById('form-container');
-
-    // Get the first form group as a template
-    const firstFormGroup = formContainer.querySelector('.form-group');
-
-    // Clone the template
-    const newFormGroup = firstFormGroup.cloneNode(true);
-
-    // Update the label and input ID for the new form group
-    const formCount = formContainer.querySelectorAll('.form-group').length + 1;
-    newFormGroup.querySelector('label').setAttribute('for', 'takep' + formCount);
-    newFormGroup.querySelector('label').textContent = 'Take №' + formCount + ' Price:';
-    newFormGroup.querySelector('input').setAttribute('id', 'takep' + formCount);
-    newFormGroup.querySelector('input').value = '';
-
-    // Append the new form group to the container
-    formContainer.appendChild(newFormGroup);
-
-    // Show the remove button if there is more than one form group
-    toggleRemoveButton();
-
-    // Show the stop-to-entry form if there are two or more take forms
-    toggleStopToEntryForm();
-});
-
-document.getElementById('remove-form-button').addEventListener('click', function () {
-    // Get the form container
-    const formContainer = document.getElementById('form-container');
-
-    // Get all form groups
-    const formGroups = formContainer.querySelectorAll('.form-group');
-
-    // Remove the last form group if there's more than one
-    if (formGroups.length > 1) {
-        formContainer.removeChild(formGroups[formGroups.length - 1]);
-    }
-
-    // Hide the remove button if there is only one form group left
-    toggleRemoveButton();
-
-    // Show/hide the stop-to-entry form based on the number of take forms
-    toggleStopToEntryForm();
-});
-
-
-// Updating trade info after update of the trade form
 document.addEventListener('DOMContentLoaded', () => {
-    const takeInputs = document.querySelectorAll('#form-container input[id^="takep"]');
     const stoeInput = document.getElementById('stoe');
     const stopPriceInput = document.getElementById('stopp');
     const entryPriceInput = document.getElementById('entryp');
     const leverageInput = document.getElementById('leverage');
     const toolSelect = document.getElementById('tool');
 
-    // Add event listeners to each input field
-    takeInputs.forEach(input => input.addEventListener('change', checkAndSubmit));
-    stoeInput.addEventListener('change', checkAndSubmit);
-    stopPriceInput.addEventListener('change', checkAndSubmit);
-    entryPriceInput.addEventListener('change', checkAndSubmit);
-    leverageInput.addEventListener('change', checkAndSubmit);
-    toolSelect.addEventListener('change', checkAndSubmit);
-
+    // Function to handle input changes
     function checkAndSubmit() {
-        console.log("Processed Trade Data")
+        // Dynamically update take inputs list
+        const takeInputs = document.querySelectorAll('#form-container input[id^="takep"]');
+
+        // Get all the input values
         const takes = Array.from(takeInputs).map(input => parseFloat(input.value.replace(",", ".")));
         const stoe = parseInt(stoeInput.value);
         const stopPrice = parseFloat(stopPriceInput.value.replace(",", "."));
@@ -94,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tradeInfoDiv = document.getElementById('tradeinfo');
                     tradeInfoDiv.classList.remove('d-none');
 
-
                     document.getElementById('volume-value').textContent = data.volume;
                     document.getElementById('margin-value').textContent = data.margin;
                     document.getElementById('loss-value').textContent = data.potential_loss;
@@ -105,6 +51,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         }
     }
+
+    // Add event listeners to each input field
+    document.querySelectorAll('#form-container input[id^="takep"]').forEach(input => input.addEventListener('change', checkAndSubmit));
+    stoeInput.addEventListener('change', checkAndSubmit);
+    stopPriceInput.addEventListener('change', checkAndSubmit);
+    entryPriceInput.addEventListener('change', checkAndSubmit);
+    leverageInput.addEventListener('change', checkAndSubmit);
+    toolSelect.addEventListener('change', checkAndSubmit);
+
+    // Adding/Removing Take levels
+    document.getElementById('add-form-button').addEventListener('click', function () {
+        // Get the form container
+        const formContainer = document.getElementById('form-container');
+
+        // Get the first form group as a template
+        const firstFormGroup = formContainer.querySelector('.form-group');
+
+        // Clone the template
+        const newFormGroup = firstFormGroup.cloneNode(true);
+
+        // Update the label and input ID for the new form group
+        const formCount = formContainer.querySelectorAll('.form-group').length + 1;
+        newFormGroup.querySelector('label').setAttribute('for', 'takep' + formCount);
+        newFormGroup.querySelector('label').textContent = 'Take №' + formCount + ' Price:';
+        const newInput = newFormGroup.querySelector('input');
+        newInput.setAttribute('id', 'takep' + formCount);
+        newInput.value = '';  // Clear the input value
+
+        // Append the new form group to the container
+        formContainer.appendChild(newFormGroup);
+
+        // Bind the checkAndSubmit function to the new input field
+        newInput.addEventListener('change', checkAndSubmit);
+
+        // Show the remove button if there is more than one form group
+        toggleRemoveButton();
+
+        // Show the stop-to-entry form if there are two or more take forms
+        toggleStopToEntryForm();
+    });
+
+    document.getElementById('remove-form-button').addEventListener('click', function () {
+        // Get the form container
+        const formContainer = document.getElementById('form-container');
+
+        // Get all form groups
+        const formGroups = formContainer.querySelectorAll('.form-group');
+
+        // Remove the last form group if there's more than one
+        if (formGroups.length > 1) {
+            formContainer.removeChild(formGroups[formGroups.length - 1]);
+        }
+
+        // Hide the remove button if there is only one form group left
+        toggleRemoveButton();
+
+        // Show/hide the stop-to-entry form based on the number of take forms
+        toggleStopToEntryForm();
+    });
 });
 
 
